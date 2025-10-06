@@ -1,8 +1,10 @@
 package com.accounts.controller;
 
 import com.accounts.dto.AccountRequest;
+import com.accounts.dto.AccountTransactionRequest;
 import com.accounts.entity.Account;
 import com.accounts.service.impl.AccountServiceImpl;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -11,6 +13,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/accounts")
+@Slf4j
 public class AccountController {
 
     private final AccountServiceImpl accountServiceImpl;
@@ -47,6 +50,7 @@ public class AccountController {
 
     @PostMapping("/{id}/deposit")
     public ResponseEntity<String> deposit(@PathVariable Long id, @RequestParam BigDecimal amount) {
+        log.info("Received transaction request: {}", id);
         accountServiceImpl.deposit(id, amount);
         return ResponseEntity.ok("Deposit successful");
     }
@@ -58,11 +62,12 @@ public class AccountController {
     }
 
     @PostMapping("/transfer")
-    public ResponseEntity<String> transfer(
-            @RequestParam Long fromAccountId,
-            @RequestParam Long toAccountId,
-            @RequestParam BigDecimal amount) {
-        accountServiceImpl.transfer(fromAccountId, toAccountId, amount);
+    public ResponseEntity<String> transfer(@RequestBody AccountTransactionRequest request) {
+        accountServiceImpl.transfer(
+                request.getFromAccountId(),
+                request.getToAccountId(),
+                request.getAmount());
         return ResponseEntity.ok("Transfer successful");
     }
+
 }

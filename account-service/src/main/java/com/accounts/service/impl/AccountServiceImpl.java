@@ -5,6 +5,7 @@ import com.accounts.entity.Account;
 import com.accounts.entity.AccountStatus;
 import com.accounts.repository.AccountRepository;
 import com.accounts.service.AccountService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,6 +13,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 @Service
+@Slf4j
 public class AccountServiceImpl implements AccountService {
 
     private final AccountRepository accountRepository;
@@ -50,16 +52,29 @@ public class AccountServiceImpl implements AccountService {
 
     @Transactional
     public void deposit(Long accountId, BigDecimal amount) {
-        Account account = accountRepository.findByIdForUpdate(accountId)
-                .orElseThrow(() -> new RuntimeException("Account not found"));
+        log.info(">>> Deposit initiated for accountId={} amount={}", accountId, amount);
 
-        account.setBalance(account.getBalance().add(amount));
-        accountRepository.save(account);
+        try {
+            Account account = accountRepository.findById(accountId)
+                    .orElseThrow(() -> new RuntimeException("Account not found"));
+
+            BigDecimal oldBalance = account.getBalance();
+            BigDecimal newBalance = oldBalance.add(amount);
+
+            account.setBalance(newBalance);
+            accountRepository.save(account);
+
+            log.info(">>> Deposit successful. Old balance={}, New balance={}", oldBalance, newBalance);
+
+        } catch (Exception e) {
+            log.error("Deposit failed for accountId={} due to {}", accountId, e.getMessage(), e);
+            throw e; // Important: rethrow so transaction rolls back
+        }
     }
 
     @Transactional
     public void withdraw(Long accountId, BigDecimal amount) {
-        Account account = accountRepository.findByIdForUpdate(accountId)
+        Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new RuntimeException("Account not found"));
 
         if (account.getBalance().compareTo(amount) < 0) {
@@ -77,10 +92,10 @@ public class AccountServiceImpl implements AccountService {
         }
 
         // 🔹 Lock both accounts in a fixed order (deadlock prevention)
-        Account fromAccount = accountRepository.findByIdForUpdate(fromAccountId)
+        Account fromAccount = accountRepository.findById(fromAccountId)
                 .orElseThrow(() -> new RuntimeException("Source account not found"));
 
-        Account toAccount = accountRepository.findByIdForUpdate(toAccountId)
+        Account toAccount = accountRepository.findById(toAccountId)
                 .orElseThrow(() -> new RuntimeException("Target account not found"));
 
         if (fromAccount.getBalance().compareTo(amount) < 0) {
