@@ -1,0 +1,14 @@
+docker exec -it kafka bash
+
+kafka-console-producer --bootstrap-server localhost:9092 --topic bank.events
+
+
+{"eventSource":"TRANSACTION_SERVICE","eventType":"DEBIT_ALERT","customerId":"CUST12345","accountId":"NewACC10001","channel":"EMAIL","eventTime":"2025-10-07T15:30:00Z","data":{"customerName":"John Doe","amount":"5000","maskedAccount":"XXXX3456","mode":"UPI"}}
+
+
+{"eventSource":"TRANSACTION_SERVICE","eventType":"CREDIT_ALERT","customerId":"CUST12345","accountId":"ACC10001","channel":"EMAIL","eventTime":"2025-10-07T16:20:00Z","data":{"customerName":"John Doe","amount":"7000","maskedAccount":"XXXX3456","source":"Salary"}}
+
+
+{"eventSource":"ACCOUNT_SERVICE","eventType":"LOW_BALANCE_ALERT","customerId":"CUST12345","accountId":"ACC10001","channel":"EMAIL","eventTime":"2025-10-07T16:25:00Z","data":{"customerName":"John Doe","currentBalance":"450","threshold":"500"}}
+
+{"eventSource":"SECURITY_SERVICE","eventType":"PASSWORD_CHANGE_ALERT","customerId":"CUST12345","accountId":null,"channel":"EMAIL","eventTime":"2025-10-07T16:30:00Z","data":{"customerName":"John Doe","changeDate":"2025-10-07T16:30:00Z"}}

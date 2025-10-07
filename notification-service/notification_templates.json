@@ -1,0 +1,72 @@
+[
+  {
+    "templateId": "DEBIT_ALERT_TEMPLATE",
+    "eventType": "DEBIT_ALERT",
+    "channel": "EMAIL",
+    "subject": "₹{{amount}} Debited from Your Account",
+    "message": "Dear {{customerName}}, ₹{{amount}} has been debited from your account {{maskedAccount}} via {{mode}}.\nIf you did not authorize this transaction, please contact us immediately.\n\nThank you,\nYour Bank",
+    "isActive": true,
+    "createdAt": "2025-10-07T15:50:00Z",
+    "updatedAt": "2025-10-07T15:50:00Z"
+  },
+  {
+    "templateId": "CREDIT_ALERT_TEMPLATE",
+    "eventType": "CREDIT_ALERT",
+    "channel": "EMAIL",
+    "subject": "₹{{amount}} Credited to Your Account",
+    "message": "Dear {{customerName}}, ₹{{amount}} has been credited to your account {{maskedAccount}} from {{source}}.\n\nThank you,\nYour Bank",
+    "isActive": true,
+    "createdAt": "2025-10-07T15:50:00Z",
+    "updatedAt": "2025-10-07T15:50:00Z"
+  },
+  {
+    "templateId": "LOW_BALANCE_ALERT_TEMPLATE",
+    "eventType": "LOW_BALANCE_ALERT",
+    "channel": "EMAIL",
+    "subject": "Low Balance Alert for Account {{accountId}}",
+    "message": "Dear {{customerName}},\n\nYour account {{accountId}} has a low balance of ₹{{currentBalance}}. The minimum required balance is ₹{{threshold}}.\n\nPlease deposit funds to avoid penalties.\n\nThank you,\nYour Bank",
+    "isActive": true,
+    "createdAt": "2025-10-07T15:50:00Z",
+    "updatedAt": "2025-10-07T15:50:00Z"
+  },
+  {
+    "templateId": "CARD_EXPIRY_ALERT_TEMPLATE",
+    "eventType": "CARD_EXPIRY_ALERT",
+    "channel": "SMS",
+    "subject": "Card Expiry Reminder",
+    "message": "Dear {{customerName}}, your card {{maskedCard}} will expire on {{expiryDate}}. Please renew it before expiry.",
+    "isActive": true,
+    "createdAt": "2025-10-07T15:50:00Z",
+    "updatedAt": "2025-10-07T15:50:00Z"
+  },
+  {
+    "templateId": "CARD_BLOCKED_TEMPLATE",
+    "eventType": "CARD_BLOCKED",
+    "channel": "EMAIL",
+    "subject": "Card Blocked for Security Reasons",
+    "message": "Dear {{customerName}}, your card {{maskedCard}} has been blocked due to suspicious activity. Please contact support if unauthorized.",
+    "isActive": true,
+    "createdAt": "2025-10-07T15:50:00Z",
+    "updatedAt": "2025-10-07T15:50:00Z"
+  },
+  {
+    "templateId": "LOAN_PAYMENT_DUE_TEMPLATE",
+    "eventType": "LOAN_PAYMENT_DUE",
+    "channel": "EMAIL",
+    "subject": "Loan Payment Due Reminder",
+    "message": "Dear {{customerName}}, your EMI of ₹{{amount}} is due on {{dueDate}} for loan {{loanId}}.",
+    "isActive": true,
+    "createdAt": "2025-10-07T15:50:00Z",
+    "updatedAt": "2025-10-07T15:50:00Z"
+  },
+  {
+    "templateId": "LOAN_DISBURSED_TEMPLATE",
+    "eventType": "LOAN_DISBURSED",
+    "channel": "EMAIL",
+    "subject": "Loan Disbursed Successfully",
+    "message": "Dear {{customerName}}, your loan of ₹{{amount}} has been successfully disbursed to your account {{accountNumber}}.",
+    "isActive": true,
+    "createdAt": "2025-10-07T15:50:00Z",
+    "updatedAt": "2025-10-07T15:50:00Z"
+  }
+]

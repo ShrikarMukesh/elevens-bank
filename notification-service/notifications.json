@@ -1,0 +1,233 @@
+[
+  {
+    "notificationId": "NTF1001",
+    "eventSource": "TRANSACTION_SERVICE",
+    "eventType": "DEBIT_ALERT",
+    "customerId": "CUST12345",
+    "accountId": "ACC10001",
+    "type": "EMAIL",
+    "channel": "EMAIL",
+    "priority": "HIGH",
+    "subject": "₹5,000 Debited from Your Account",
+    "message": "Dear John, ₹5,000 has been debited from your account XXXX3456 via UPI at 10:32 AM.",
+    "status": "SENT",
+    "sentAt": "2025-10-07T10:32:00Z",
+    "retryCount": 0,
+    "metadata": {
+      "ip": "192.168.1.10",
+      "device": "Android",
+      "location": "Bangalore",
+      "deliveryChannel": "SMTP",
+      "templateId": "DEBIT_ALERT_TEMPLATE"
+    },
+    "audit": {
+      "createdAt": "2025-10-07T10:32:00Z",
+      "updatedAt": "2025-10-07T10:32:10Z",
+      "createdBy": "SYSTEM"
+    }
+  },
+  {
+    "notificationId": "NTF1002",
+    "eventSource": "TRANSACTION_SERVICE",
+    "eventType": "CREDIT_ALERT",
+    "customerId": "CUST12346",
+    "accountId": "ACC10002",
+    "type": "SMS",
+    "channel": "SMS",
+    "priority": "MEDIUM",
+    "subject": "₹10,000 Credited to Your Account",
+    "message": "₹10,000 credited to your account XXXX7890 via NEFT.",
+    "status": "SENT",
+    "sentAt": "2025-10-07T09:45:00Z",
+    "retryCount": 0,
+    "metadata": {
+      "ip": "10.10.1.4",
+      "device": "iPhone",
+      "location": "Mumbai",
+      "deliveryChannel": "SMS_GATEWAY",
+      "templateId": "CREDIT_ALERT_TEMPLATE"
+    },
+    "audit": {
+      "createdAt": "2025-10-07T09:45:00Z",
+      "updatedAt": "2025-10-07T09:45:02Z",
+      "createdBy": "SYSTEM"
+    }
+  },
+  {
+    "notificationId": "NTF1003",
+    "eventSource": "CARD_SERVICE",
+    "eventType": "CARD_EXPIRY_ALERT",
+    "customerId": "CUST12347",
+    "accountId": "ACC10003",
+    "type": "EMAIL",
+    "channel": "EMAIL",
+    "priority": "LOW",
+    "subject": "Your Card XXXX5678 Will Expire Soon",
+    "message": "Dear Customer, your debit card XXXX5678 will expire on 31-Dec-2025.",
+    "status": "PENDING",
+    "retryCount": 0,
+    "metadata": {
+      "deliveryChannel": "SMTP",
+      "templateId": "CARD_EXPIRY_TEMPLATE"
+    },
+    "audit": {
+      "createdAt": "2025-10-06T08:00:00Z",
+      "createdBy": "SYSTEM"
+    }
+  },
+  {
+    "notificationId": "NTF1004",
+    "eventSource": "CARD_SERVICE",
+    "eventType": "CARD_BLOCKED",
+    "customerId": "CUST12348",
+    "accountId": "ACC10004",
+    "type": "SMS",
+    "channel": "SMS",
+    "priority": "HIGH",
+    "subject": "Your Card Has Been Blocked",
+    "message": "Your debit card XXXX9999 has been blocked due to suspicious activity.",
+    "status": "SENT",
+    "sentAt": "2025-10-06T17:10:00Z",
+    "retryCount": 0,
+    "metadata": {
+      "deliveryChannel": "SMS_GATEWAY",
+      "templateId": "CARD_BLOCKED_TEMPLATE"
+    },
+    "audit": {
+      "createdAt": "2025-10-06T17:09:00Z",
+      "updatedAt": "2025-10-06T17:10:00Z",
+      "createdBy": "SYSTEM"
+    }
+  },
+  {
+    "notificationId": "NTF1005",
+    "eventSource": "LOAN_SERVICE",
+    "eventType": "LOAN_PAYMENT_DUE",
+    "customerId": "CUST12349",
+    "accountId": "ACC10005",
+    "type": "EMAIL",
+    "channel": "EMAIL",
+    "priority": "HIGH",
+    "subject": "Loan EMI Due Reminder",
+    "message": "Dear Raj, your EMI of ₹8,500 is due on 10-Oct-2025.",
+    "status": "QUEUED",
+    "retryCount": 0,
+    "metadata": {
+      "templateId": "LOAN_DUE_TEMPLATE"
+    },
+    "audit": {
+      "createdAt": "2025-10-05T09:00:00Z",
+      "createdBy": "SYSTEM"
+    }
+  },
+  {
+    "notificationId": "NTF1006",
+    "eventSource": "LOAN_SERVICE",
+    "eventType": "LOAN_DISBURSED",
+    "customerId": "CUST12350",
+    "accountId": "ACC10006",
+    "type": "EMAIL",
+    "channel": "EMAIL",
+    "priority": "MEDIUM",
+    "subject": "Loan Disbursed Successfully",
+    "message": "Your loan of ₹3,00,000 has been credited to your account XXXX2345.",
+    "status": "SENT",
+    "sentAt": "2025-10-04T12:30:00Z",
+    "retryCount": 0,
+    "metadata": {
+      "templateId": "LOAN_DISBURSED_TEMPLATE"
+    },
+    "audit": {
+      "createdAt": "2025-10-04T12:30:00Z",
+      "createdBy": "SYSTEM"
+    }
+  },
+  {
+    "notificationId": "NTF1007",
+    "eventSource": "ACCOUNT_SERVICE",
+    "eventType": "ACCOUNT_STATUS_CHANGE",
+    "customerId": "CUST12351",
+    "accountId": "ACC10007",
+    "type": "EMAIL",
+    "channel": "EMAIL",
+    "priority": "LOW",
+    "subject": "Your Account is Now Active",
+    "message": "Dear Customer, your account XXXX1234 has been activated successfully.",
+    "status": "SENT",
+    "sentAt": "2025-10-03T10:00:00Z",
+    "retryCount": 0,
+    "metadata": {
+      "templateId": "ACCOUNT_STATUS_TEMPLATE"
+    },
+    "audit": {
+      "createdAt": "2025-10-03T09:59:00Z",
+      "createdBy": "SYSTEM"
+    }
+  },
+  {
+    "notificationId": "NTF1008",
+    "eventSource": "CUSTOMER_SERVICE",
+    "eventType": "KYC_UPDATE",
+    "customerId": "CUST12352",
+    "accountId": "ACC10008",
+    "type": "SMS",
+    "channel": "SMS",
+    "priority": "LOW",
+    "subject": "KYC Verification Successful",
+    "message": "Your KYC documents have been verified successfully.",
+    "status": "SENT",
+    "sentAt": "2025-10-02T15:45:00Z",
+    "retryCount": 0,
+    "metadata": {
+      "templateId": "KYC_UPDATE_TEMPLATE"
+    },
+    "audit": {
+      "createdAt": "2025-10-02T15:44:00Z",
+      "createdBy": "SYSTEM"
+    }
+  },
+  {
+    "notificationId": "NTF1009",
+    "eventSource": "AUTH_SERVICE",
+    "eventType": "PASSWORD_CHANGE_ALERT",
+    "customerId": "CUST12353",
+    "accountId": "ACC10009",
+    "type": "EMAIL",
+    "channel": "EMAIL",
+    "priority": "HIGH",
+    "subject": "Your Password Has Been Changed",
+    "message": "Your account password was changed successfully on 07-Oct-2025 at 09:30 AM.",
+    "status": "SENT",
+    "sentAt": "2025-10-07T09:31:00Z",
+    "retryCount": 0,
+    "metadata": {
+      "templateId": "PASSWORD_CHANGE_TEMPLATE"
+    },
+    "audit": {
+      "createdAt": "2025-10-07T09:31:00Z",
+      "createdBy": "SYSTEM"
+    }
+  },
+  {
+    "notificationId": "NTF1010",
+    "eventSource": "TRANSACTION_SERVICE",
+    "eventType": "SERVICE_CHARGE_DEBITED",
+    "customerId": "CUST12354",
+    "accountId": "ACC10010",
+    "type": "EMAIL",
+    "channel": "EMAIL",
+    "priority": "LOW",
+    "subject": "Service Charge Deducted",
+    "message": "₹15 service charge deducted for ATM withdrawal.",
+    "status": "SENT",
+    "sentAt": "2025-10-06T08:15:00Z",
+    "retryCount": 0,
+    "metadata": {
+      "templateId": "SERVICE_CHARGE_TEMPLATE"
+    },
+    "audit": {
+      "createdAt": "2025-10-06T08:14:00Z",
+      "createdBy": "SYSTEM"
+    }
+  }
+]
