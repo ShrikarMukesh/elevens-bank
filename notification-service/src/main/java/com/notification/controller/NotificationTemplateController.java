@@ -36,15 +36,15 @@ public class NotificationTemplateController {
     }
 
     // Get template by eventType + channel
-    @GetMapping("/by-event")
-    public ResponseEntity<NotificationTemplate> getByEventTypeAndChannel(
-            @RequestParam String eventType,
-            @RequestParam String channel
-    ) {
-        Optional<NotificationTemplate> template = templateRepository.findByEventTypeAndChannelAndIsActiveTrue(eventType, channel);
-        return template.map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
+//    @GetMapping("/by-event")
+//    public ResponseEntity<NotificationTemplate> getByEventTypeAndChannel(
+//            @RequestParam String eventType,
+//            @RequestParam String channel
+//    ) {
+//        Optional<NotificationTemplate> template = templateRepository.findByEventTypeAndChannelAndIsActiveTrue(eventType, channel);
+//        return template.map(ResponseEntity::ok)
+//                .orElse(ResponseEntity.notFound().build());
+//    }
 
     // Create a new template
     @PostMapping

@@ -2,6 +2,16 @@ server:
   port: 5001
 
 spring:
+  profiles:
+    active: dev
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: pmsjavateam3@gmail.com
+    password: ''
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
   application:
     name: notification-service
 
@@ -21,3 +31,10 @@ spring:
         spring.json.trusted.packages: "*"
     topic:
       name: bank.events
+twilio:
+  account:
+    sid: ''
+  auth:
+    token: ''
+  from:
+    number: ''

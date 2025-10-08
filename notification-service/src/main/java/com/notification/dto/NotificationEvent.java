@@ -9,6 +9,7 @@ import java.util.Map;
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class NotificationEvent {
+
     private String eventSource;
     private String eventType;
     private String customerId;

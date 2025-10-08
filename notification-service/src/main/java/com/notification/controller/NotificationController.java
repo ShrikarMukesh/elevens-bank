@@ -5,6 +5,7 @@ import com.notification.entity.Notification;
 import com.notification.service.NotificationService;
 import com.notification.repository.NotificationRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,6 +13,7 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
+@Slf4j
 @RequestMapping("/api/notifications")
 @RequiredArgsConstructor
 public class NotificationController {
@@ -59,5 +61,21 @@ public class NotificationController {
     public ResponseEntity<Void> deleteAll() {
         notificationRepository.deleteAll();
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Send notification manually for testing EMAIL/SMS.
+     */
+    @PostMapping("/sendEmail")
+    public ResponseEntity<String> sendNotificationEmail(@RequestBody NotificationEvent event) {
+        log.info("🚀 Manual notification trigger received for eventType: {}", event.getEventType());
+        try {
+            notificationService.processNotification(event);
+            return ResponseEntity.ok("✅ Notification processed successfully.");
+        } catch (Exception e) {
+            log.error("❌ Failed to process manual notification: {}", e.getMessage());
+            return ResponseEntity.internalServerError()
+                    .body("❌ Failed to process notification: " + e.getMessage());
+        }
     }
 }
