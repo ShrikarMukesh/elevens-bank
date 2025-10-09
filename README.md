@@ -1,8 +1,11 @@
-🏦 Financial Microservices Architecture Design & Roadmap
-This document outlines the architecture using the C4 Model (Container View) and provides a phased implementation roadmap based on the suggested build order.
+🏦 Financial Microservices Architecture: Elevens Bank
+1. Project Overview
+   This repository contains the microservices architecture for "Elevens Bank," an event-driven system designed for scalability, high availability, and strong data consistency, primarily using the Spring Cloud ecosystem and Kafka as the central nervous system.
 
-1. C4 Container View: Architecture Overview
-This view shows the system’s containers (your microservices), the data stores they own, and the primary communication channels.
+The architecture follows the C4 Model (Container View) to clearly define boundaries and communication.
+
+2. Architecture Overview (C4 Container View)
+   The system is composed of several independent services, each owning its specific data store and communicating primarily through the API Gateway (synchronous requests) and the Kafka Cluster (asynchronous events).
 
 Container / Service
 
@@ -92,19 +95,17 @@ N/A
 
 Asynchronous Communication Bus for SAGA transactions and event notifications.
 
-Key Communication Flows:
-Request/Response (Synchronous): Client → API Gateway → Microservice (e.g., checking account balance).
+Key Communication Flows
+Request/Response (Synchronous): External calls flow through the API Gateway → Microservice (e.g., login, retrieve profile).
 
-SAGA Pattern (Asynchronous): Transaction Service → Kafka (txn-commands) → Account Service → Kafka (txn-events) → Transaction Service.
+SAGA Pattern (Asynchronous): Used for complex, distributed transactions (e.g., withdrawals). Transaction Service → Kafka (txn-commands) → Account Service → Kafka (txn-events) → Transaction Service to ensure atomicity.
 
-Event Notification: Any service → Kafka (status-updates) → Notification Service.
+Event Notification: Any service publishes status updates → Kafka → Notification Service for user alerts and logging.
 
-2. 4-Week Implementation Roadmap
-This plan focuses on building the services in logical phases, ensuring that each phase delivers a functioning layer upon which the next layer can be built.
+3. Implementation Roadmap (4 Weeks)
+   The development is structured into four phases, building the foundation before layering on business logic.
 
 Phase 1: Foundation and Identity (Week 1)
-Goal: Establish the infrastructure and security framework.
-
 Service
 
 Tasks
@@ -119,7 +120,7 @@ Dynamic routing for all services.
 
 Auth Service
 
-Implement users table entity, repository, and basic Spring Security setup. Define user registration and login endpoints.
+Implement users entity, repository, and basic Spring Security setup. Define user registration and login endpoints.
 
 User registration and JWT generation.
 
@@ -130,8 +131,6 @@ Define all core Kafka topic names (user-events, txn-commands, txn-events).
 Auth Service successfully publishes a UserCreated event.
 
 Phase 2: Core Data Services (Week 2)
-Goal: Establish the primary entities that hold money and profile information.
-
 Service
 
 Tasks
@@ -157,8 +156,6 @@ Auth Service publishes UserCreated. Customer Service consumes user-events to cre
 Decoupled user/customer creation flow.
 
 Phase 3: Value Transfer (Week 3)
-Goal: Implement the complex, highly-consistent transaction logic using the SAGA pattern.
-
 Service
 
 Tasks
@@ -184,8 +181,6 @@ Implement cards entity. Define logic for checking daily/monthly limits before al
 Ability to link a card to an account and manage card status.
 
 Phase 4: Extensions and User Feedback (Week 4)
-Goal: Implement auxiliary services and provide the user with feedback and history.
-
 Service
 
 Tasks
@@ -210,3 +205,5 @@ Complete integration testing across all 7 services.
 
 System ready for deployment and QA.
 
+4. Local Development Setup
+   Refer to the docker-compose.yml file for setting up the local Kafka and Zookeeper environment. Ensure your Spring Boot services use localhost:29092 for the Kafka bootstrap server.
