@@ -1,0 +1,92 @@
+{
+  "_id": "66e5a9f8b1234a00abc5678d",
+  "customerId": "CUST12345",        // External-facing unique ID
+  "userId": 1001,                   // Link to Auth Service (users table)
+  "firstName": "Ravi",
+  "lastName": "Sharma",
+  "dob": "1988-07-15",
+  "gender": "MALE",
+  "email": "ravi.sharma@example.com",
+  "phoneNumbers": [
+    { "type": "MOBILE", "number": "+91-9876543210", "isPrimary": true },
+    { "type": "HOME", "number": "+91-1122334455" }
+  ],
+  "addresses": [
+    {
+      "type": "HOME",
+      "line1": "123 MG Road",
+      "city": "Bangalore",
+      "state": "Karnataka",
+      "pincode": "560001",
+      "country": "India",
+      "isPrimary": true
+    },
+    {
+      "type": "WORK",
+      "line1": "456 IT Park",
+      "city": "Bangalore",
+      "state": "Karnataka",
+      "pincode": "560100",
+      "country": "India"
+    }
+  ],
+  "kyc": {
+    "aadhaar": "xxxx-xxxx-xxxx",
+    "pan": "ABCDE1234F",
+    "passport": "M1234567",
+    "verified": true,
+    "verifiedAt": "2025-09-30T10:20:00Z"
+  },
+  "status": "ACTIVE",              // Enum: ACTIVE | INACTIVE | SUSPENDED | CLOSED
+  "riskProfile": "LOW",            // Optional: for banking/loan context
+  "segment": "RETAIL",             // Could be RETAIL, SME, CORPORATE
+  "preferences": {
+    "language": "English",
+    "notifications": true,
+    "channels": ["EMAIL", "SMS"]
+  },
+  "createdAt": "2025-09-30T10:15:00Z",
+  "updatedAt": "2025-10-09T09:00:00Z"
+}
+
+
+{
+  "loanId": "LN10001",
+  "customerId": "CUST12345",
+  "loanType": "HOME",
+  "principalAmount": 5000000,
+  "interestRate": 7.5,
+  "tenureMonths": 240,
+  "startDate": "2025-01-01",
+  "endDate": "2045-01-01",
+  "collateral": {
+    "type": "Property",
+    "details": "Flat at Koramangala, Bangalore"
+  },
+  "guarantors": [
+    { "name": "Suresh Reddy", "relation": "Brother", "contact": "+91-9999999999" }
+  ],
+  "emiSchedule": [
+    { "month": 1, "dueDate": "2025-02-01", "amount": 40250, "status": "PAID" },
+    { "month": 2, "dueDate": "2025-03-01", "amount": 40250, "status": "PENDING" }
+  ],
+  "status": "ACTIVE",
+  "createdAt": "2025-01-01T09:00:00Z"
+}
+
+
+{
+  "notificationId": "NTF1001",
+  "customerId": "CUST12345",
+  "type": "EMAIL",
+  "channel": "EMAIL",
+  "subject": "Your Account Statement",
+  "message": "Dear Customer, your statement is ready.",
+  "status": "SENT",
+  "sentAt": "2025-09-30T11:00:00Z",
+  "metadata": {
+    "ip": "192.168.1.10",
+    "device": "Android",
+    "location": "Bangalore"
+  }
+}

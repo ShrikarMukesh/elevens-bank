@@ -1,9 +1,4 @@
-Here’s a **professional and production-grade** `README.md` format for your **🏦 Elevens Bank – Financial Microservices Architecture** project.
-It’s written to align with enterprise-level GitHub documentation standards, with structured sections, diagrams, and setup instructions.
-
----
-
-```markdown
+````markdown
 # 🏦 Elevens Bank — Financial Microservices Architecture
 
 > **Event-driven, Cloud-Native Banking Platform** built with Spring Boot, Spring Cloud, and Apache Kafka  
@@ -15,13 +10,14 @@ It’s written to align with enterprise-level GitHub documentation standards, wi
 - [1. Overview](#1-overview)
 - [2. Architecture (C4 Container View)](#2-architecture-c4-container-view)
 - [3. Key Communication Flows](#3-key-communication-flows)
-- [4. Technology Stack](#4-technology-stack)
-- [5. Implementation Roadmap (4 Weeks)](#5-implementation-roadmap-4-weeks)
-- [6. Service Responsibilities](#6-service-responsibilities)
-- [7. Kafka Topics](#7-kafka-topics)
-- [8. Getting Started](#8-getting-started)
-- [9. Future Enhancements](#9-future-enhancements)
-- [10. License](#10-license)
+- [4. SAGA Transaction Flow (Sequence Diagram)](#4-saga-transaction-flow-sequence-diagram)
+- [5. Technology Stack](#5-technology-stack)
+- [6. Implementation Roadmap (4 Weeks)](#6-implementation-roadmap-4-weeks)
+- [7. Service Responsibilities](#7-service-responsibilities)
+- [8. Kafka Topics](#8-kafka-topics)
+- [9. Getting Started](#9-getting-started)
+- [10. Future Enhancements](#10-future-enhancements)
+- [11. License](#11-license)
 
 ---
 
@@ -40,113 +36,176 @@ It supports:
 
 ## 2. Architecture (C4 Container View)
 
-Below is the **C4 Model (Container Level)** view of the system:
+### 🧩 System Overview Diagram (C4 Container View)
 
-```
+```mermaid
+flowchart TB
+    subgraph Clients[Client Applications]
+        WebApp[Web App]
+        MobileApp[Mobile App]
+    end
 
-[Client Apps] ---> [API Gateway] ---> [Auth Service]
-|
-├──> [Customer Service]
-├──> [Account Service]
-├──> [Transaction Service]
-├──> [Card Service]
-├──> [Loan Service]
-└──> [Notification Service]
+    Clients -->|HTTP/REST| APIGateway
 
-```
-                      [Kafka Cluster] <----> All Services
-```
+    subgraph Core[Core Microservices]
+        APIGateway[API Gateway\n(Spring Cloud Gateway)]
+        AuthService[Auth Service\n(Spring Boot + MySQL/PostgreSQL)]
+        CustomerService[Customer Service\n(Spring Boot + MongoDB)]
+        AccountService[Account Service\n(Spring Boot + MySQL/PostgreSQL)]
+        TransactionService[Transaction Service\n(Spring Boot + MySQL/PostgreSQL)]
+        CardService[Card Service\n(Spring Boot + MySQL/PostgreSQL)]
+        LoanService[Loan Service\n(Spring Boot + MongoDB)]
+        NotificationService[Notification Service\n(Spring Boot + MongoDB)]
+    end
 
+    subgraph Infra[Infrastructure]
+        Eureka[Eureka Discovery Service]
+        Kafka[Kafka Cluster\n(Confluent Platform)]
+    end
+
+    APIGateway --> AuthService
+    APIGateway --> CustomerService
+    APIGateway --> AccountService
+    APIGateway --> TransactionService
+    APIGateway --> CardService
+    APIGateway --> LoanService
+    APIGateway --> NotificationService
+
+    AuthService -->|Publishes user-events| Kafka
+    TransactionService -->|Publishes txn-commands| Kafka
+    AccountService -->|Publishes txn-events| Kafka
+    LoanService -->|Publishes loan-events| Kafka
+    CardService -->|Publishes card-status| Kafka
+
+    Kafka -->|Consumes events| NotificationService
+    Kafka -->|Consumes user-events| CustomerService
+    Kafka -->|Consumes txn-commands| AccountService
+    Kafka -->|Consumes txn-events| TransactionService
+
+    Eureka -.-> Core
 ````
-
-| Container / Service | Role & Technology | Data Store | Communication |
-|----------------------|------------------|-------------|----------------|
-| **Client Applications** | Web, Mobile, Internal Tools | N/A | HTTP/REST via API Gateway |
-| **API Gateway** | Spring Cloud Gateway | N/A | Routes all traffic, JWT validation |
-| **Auth Service** | Spring Boot (Java) | MySQL/PostgreSQL | Publishes `user-events` |
-| **Customer Service** | Spring Boot (Java) | MongoDB | Consumes `user-events` |
-| **Account Service** | Spring Boot (Java) | MySQL/PostgreSQL | Consumes/produces `txn-commands` & `txn-events` |
-| **Transaction Service** | Spring Boot (Java) | MySQL/PostgreSQL | Publishes `txn-commands`, consumes events |
-| **Card Service** | Spring Boot (Java) | MySQL/PostgreSQL | Manages card lifecycle & limits |
-| **Loan Service** | Spring Boot (Java) | MongoDB | Manages loan applications & disbursements |
-| **Notification Service** | Spring Boot (Java) | MongoDB | Listens to all events, sends alerts |
-| **Kafka Cluster** | Confluent Platform | N/A | Asynchronous communication bus |
 
 ---
 
 ## 3. Key Communication Flows
 
-| Type | Description | Example |
-|------|--------------|----------|
-| **Synchronous (HTTP)** | Through API Gateway for direct requests | `GET /customers/{id}` |
-| **Asynchronous (Kafka)** | For distributed transactions & events | `txn-commands`, `txn-events`, `user-events` |
-| **SAGA Pattern** | Transaction coordination using event choreography | Withdrawals, transfers |
-| **Event Notification** | Any service publishes an event → Notification Service processes | `txn-success`, `loan-approved` |
+| Type                     | Description                                                     | Example                                     |
+| ------------------------ | --------------------------------------------------------------- | ------------------------------------------- |
+| **Synchronous (HTTP)**   | Through API Gateway for direct requests                         | `GET /customers/{id}`                       |
+| **Asynchronous (Kafka)** | For distributed transactions & events                           | `txn-commands`, `txn-events`, `user-events` |
+| **SAGA Pattern**         | Transaction coordination using event choreography               | Withdrawals, transfers                      |
+| **Event Notification**   | Any service publishes an event → Notification Service processes | `txn-success`, `loan-approved`              |
 
 ---
 
-## 4. Technology Stack
+## 4. SAGA Transaction Flow (Sequence Diagram)
 
-| Layer | Technologies |
-|-------|---------------|
-| **Backend Framework** | Spring Boot 3.x, Spring WebFlux, Spring Data JPA, Spring Security |
-| **Microservices Infrastructure** | Spring Cloud Gateway, Eureka Discovery, Config Server |
-| **Event Streaming** | Apache Kafka / Confluent Platform |
-| **Databases** | MySQL / PostgreSQL, MongoDB |
-| **Authentication** | JWT, OAuth2 |
-| **Containerization** | Docker, Kubernetes (optional) |
-| **Build & CI/CD** | Maven, Jenkins / GitHub Actions |
-| **Monitoring** | ELK Stack, Prometheus, Grafana |
+### 🔁 Withdrawal Example (SAGA Pattern via Kafka)
 
----
+```mermaid
+sequenceDiagram
+    participant User
+    participant TransactionService
+    participant Kafka
+    participant AccountService
+    participant NotificationService
 
-## 5. Implementation Roadmap (4 Weeks)
+    User->>TransactionService: POST /transactions/withdraw (amount=₹500)
+    TransactionService->>Kafka: Publish DebitAccountCommand (txnId=TXN123)
+    
+    Kafka->>AccountService: Consume DebitAccountCommand
+    AccountService->>AccountService: Verify balance & debit account
+    
+    alt Debit Successful
+        AccountService->>Kafka: Publish DebitSuccessfulEvent (txnId=TXN123)
+        Kafka->>TransactionService: Consume DebitSuccessfulEvent
+        TransactionService->>TransactionService: Update txn_status=SUCCESS
+        TransactionService->>Kafka: Publish TransactionCompletedEvent
+        Kafka->>NotificationService: Consume TransactionCompletedEvent
+        NotificationService->>NotificationService: Send email/SMS to user
+    else Debit Failed
+        AccountService->>Kafka: Publish DebitFailedEvent (txnId=TXN123)
+        Kafka->>TransactionService: Consume DebitFailedEvent
+        TransactionService->>TransactionService: Update txn_status=FAILED
+        TransactionService->>Kafka: Publish TransactionFailedEvent
+        Kafka->>NotificationService: Consume TransactionFailedEvent
+        NotificationService->>NotificationService: Notify user of failure
+    end
+```
 
-| Phase | Week | Services | Key Deliverables |
-|--------|------|-----------|------------------|
-| **Phase 1: Foundation & Identity** | Week 1 | Gateway, Eureka, Auth | Dynamic routing, JWT generation, publish `UserCreated` |
-| **Phase 2: Core Data Services** | Week 2 | Customer, Account | CRUD operations, consume `user-events` |
-| **Phase 3: Value Transfer** | Week 3 | Transaction, Account, Card | SAGA flow for withdrawals, card validation |
-| **Phase 4: Extensions & Feedback** | Week 4 | Loan, Notification | Loan logic, centralized notifications, integration testing |
+📘 **Summary:**
 
----
-
-## 6. Service Responsibilities
-
-| Service | Key Responsibilities |
-|----------|----------------------|
-| **Auth Service** | Manage users, login/signup, JWT token generation, publish `UserCreated` |
-| **Customer Service** | Manage customer KYC, preferences, consume `UserCreated` |
-| **Account Service** | Manage balances, debit/credit operations, consume `txn-commands` |
-| **Transaction Service** | Initiate fund transfers, manage transaction states, publish events |
-| **Card Service** | Manage cards, limits, and lifecycle |
-| **Loan Service** | Manage loan documents, disbursements, and repayments |
-| **Notification Service** | Consume all events, log, and send notifications via email/SMS |
-
----
-
-## 7. Kafka Topics
-
-| Topic Name | Producer | Consumer | Description |
-|-------------|-----------|-----------|--------------|
-| `user-events` | Auth Service | Customer Service | User profile creation event |
-| `txn-commands` | Transaction Service | Account Service | Command to debit/credit |
-| `txn-events` | Account Service | Transaction, Notification | Transaction result |
-| `loan-events` | Loan Service | Account, Notification | Loan disbursement updates |
-| `card-status` | Card Service | Notification | Card activation/deactivation |
-| `notification-events` | All Services | Notification | Unified alert stream |
+* Transaction Service **initiates** a debit request by publishing `DebitAccountCommand`.
+* Account Service **validates** balance and publishes either `DebitSuccessfulEvent` or `DebitFailedEvent`.
+* Transaction Service **updates** transaction status and publishes a result event.
+* Notification Service **listens** to all transaction outcomes and alerts the customer.
 
 ---
 
-## 8. Getting Started
+## 5. Technology Stack
+
+| Layer                            | Technologies                                                      |
+| -------------------------------- | ----------------------------------------------------------------- |
+| **Backend Framework**            | Spring Boot 3.x, Spring WebFlux, Spring Data JPA, Spring Security |
+| **Microservices Infrastructure** | Spring Cloud Gateway, Eureka Discovery, Config Server             |
+| **Event Streaming**              | Apache Kafka / Confluent Platform                                 |
+| **Databases**                    | MySQL / PostgreSQL, MongoDB                                       |
+| **Authentication**               | JWT, OAuth2                                                       |
+| **Containerization**             | Docker, Kubernetes (optional)                                     |
+| **Build & CI/CD**                | Maven, Jenkins / GitHub Actions                                   |
+| **Monitoring**                   | ELK Stack, Prometheus, Grafana                                    |
+
+---
+
+## 6. Implementation Roadmap (4 Weeks)
+
+| Phase                              | Week   | Services                   | Key Deliverables                                           |
+| ---------------------------------- | ------ | -------------------------- | ---------------------------------------------------------- |
+| **Phase 1: Foundation & Identity** | Week 1 | Gateway, Eureka, Auth      | Dynamic routing, JWT generation, publish `UserCreated`     |
+| **Phase 2: Core Data Services**    | Week 2 | Customer, Account          | CRUD operations, consume `user-events`                     |
+| **Phase 3: Value Transfer**        | Week 3 | Transaction, Account, Card | SAGA flow for withdrawals, card validation                 |
+| **Phase 4: Extensions & Feedback** | Week 4 | Loan, Notification         | Loan logic, centralized notifications, integration testing |
+
+---
+
+## 7. Service Responsibilities
+
+| Service                  | Key Responsibilities                                                    |
+| ------------------------ | ----------------------------------------------------------------------- |
+| **Auth Service**         | Manage users, login/signup, JWT token generation, publish `UserCreated` |
+| **Customer Service**     | Manage customer KYC, preferences, consume `UserCreated`                 |
+| **Account Service**      | Manage balances, debit/credit operations, consume `txn-commands`        |
+| **Transaction Service**  | Initiate fund transfers, manage transaction states, publish events      |
+| **Card Service**         | Manage cards, limits, and lifecycle                                     |
+| **Loan Service**         | Manage loan documents, disbursements, and repayments                    |
+| **Notification Service** | Consume all events, log, and send notifications via email/SMS           |
+
+---
+
+## 8. Kafka Topics
+
+| Topic Name            | Producer            | Consumer                  | Description                  |
+| --------------------- | ------------------- | ------------------------- | ---------------------------- |
+| `user-events`         | Auth Service        | Customer Service          | User profile creation event  |
+| `txn-commands`        | Transaction Service | Account Service           | Command to debit/credit      |
+| `txn-events`          | Account Service     | Transaction, Notification | Transaction result           |
+| `loan-events`         | Loan Service        | Account, Notification     | Loan disbursement updates    |
+| `card-status`         | Card Service        | Notification              | Card activation/deactivation |
+| `notification-events` | All Services        | Notification              | Unified alert stream         |
+
+---
+
+## 9. Getting Started
 
 ### 🧱 Prerequisites
-- Java 17+
-- Maven 3.9+
-- Docker & Docker Compose
-- Kafka & Zookeeper (via Confluent or Docker)
+
+* Java 17+
+* Maven 3.9+
+* Docker & Docker Compose
+* Kafka & Zookeeper (via Confluent or Docker)
 
 ### 🚀 Setup Steps
+
 ```bash
 # 1. Clone the repository
 git clone https://github.com/<your-org>/elevens-bank.git
@@ -163,7 +222,7 @@ cd ../api-gateway && mvn spring-boot:run
 cd ../auth-service && mvn spring-boot:run
 cd ../customer-service && mvn spring-boot:run
 # ...repeat for all services
-````
+```
 
 ### 🧪 Test Endpoints
 
@@ -185,7 +244,7 @@ POST /accounts
 
 ---
 
-## 9. Future Enhancements
+## 10. Future Enhancements
 
 * Integrate **Circuit Breaker (Resilience4j)** for fault tolerance
 * Implement **API Rate Limiting** in API Gateway
@@ -194,7 +253,7 @@ POST /accounts
 
 ---
 
-## 10. License
+## 11. License
 
 This project is licensed under the **MIT License** — feel free to use, modify, and distribute with attribution.
 
@@ -205,12 +264,8 @@ This project is licensed under the **MIT License** — feel free to use, modify,
 **Shrikar**
 Senior Java Developer • Cognizant
 Expert in Spring Boot, Kafka, Microservices, and Cloud-Native Architectures
-📧 *[[your.email@example.com](mailto:mukesh.shrikar7.com)]*
+📧 *[[your.email@example.com](mailto:your.email@example.com)]*
 
 ```
 
----
 
-Would you like me to include a **diagram image (C4 Container View)** using PlantUML or Mermaid syntax directly inside the README (so GitHub renders it automatically)?  
-It makes the architecture visually clear and looks great in repositories.
-```
