@@ -1,6 +1,5 @@
 package com.auth.filter;
 
-
 import com.auth.util.JwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
