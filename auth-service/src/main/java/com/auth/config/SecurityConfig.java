@@ -36,7 +36,6 @@ public class SecurityConfig {
         return http.build();
     }
 
-    // use modern AuthenticationConfiguration
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();

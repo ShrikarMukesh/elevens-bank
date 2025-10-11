@@ -1,13 +1,11 @@
 package com.auth.service;
 
-import com.auth.dto.LoginResponse;
 import com.auth.entity.Session;
 import com.auth.entity.User;
 import com.auth.repository.SessionRepository;
 import com.auth.repository.UserRepository;
 import com.auth.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -56,7 +54,7 @@ public class AuthService implements UserDetailsService {
                     sessionRepository.save(s);
                 });
 
-        String accessToken = jwtUtil.generateToken(username);
+        String accessToken = jwtUtil.generateToken(username, user.getRole().name());
         String refreshToken = UUID.randomUUID().toString();
 
         Session session = Session.builder()
@@ -91,7 +89,8 @@ public class AuthService implements UserDetailsService {
             throw new RuntimeException("Token revoked");
         }
 
-        String newAccessToken = jwtUtil.generateToken(session.getUser().getUsername());
+        String newAccessToken = jwtUtil.generateToken(session.getUser().getUsername(),
+                session.getUser().getRole().name());
         session.setAccessToken(newAccessToken);
         session.setExpiryTime(LocalDateTime.now().plusMinutes(15));
 
@@ -117,4 +116,3 @@ public class AuthService implements UserDetailsService {
                 .build();
     }
 }
-

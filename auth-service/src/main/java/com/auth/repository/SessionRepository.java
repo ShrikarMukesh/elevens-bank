@@ -10,9 +10,6 @@ import java.util.Optional;
 public interface SessionRepository extends JpaRepository<Session, Long> {
     Optional<Session> findByAccessToken(String accessToken);
     Optional<Session> findByRefreshToken(String refreshToken);
-
-    void deleteByUser(User user);
-
-    // New method for active sessions
     List<Session> findByUserAndIsRevokedFalse(User user);
+    void deleteByUser(User user);
 }

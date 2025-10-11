@@ -19,8 +19,7 @@ public class AuthController {
     // ----------------- REGISTER -----------------
     @PostMapping("/register")
     public ResponseEntity<User> register(@RequestBody User user) {
-        User registeredUser = authService.register(user);
-        return ResponseEntity.ok(registeredUser);
+        return ResponseEntity.ok(authService.register(user));
     }
 
     // ----------------- LOGIN -----------------
@@ -48,8 +47,6 @@ public class AuthController {
     // ----------------- REFRESH -----------------
     @PostMapping("/refresh")
     public ResponseEntity<Session> refresh(@RequestParam String refreshToken) {
-        Session session = authService.refresh(refreshToken);
-        return ResponseEntity.ok(session);
+        return ResponseEntity.ok(authService.refresh(refreshToken));
     }
 }
-
