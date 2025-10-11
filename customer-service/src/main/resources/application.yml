@@ -1,6 +1,18 @@
 server:
   port: 6001
 
+management:
+  server:
+    port: 8087
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
 spring:
   profiles:
     active: dev
@@ -9,10 +21,11 @@ spring:
 
   data:
     mongodb:
-      uri: mongodb://localhost:27017
+      uri: mongodb://mongo:27017        # <-- 'mongo' is container name
       database: elevens-bank
+
   kafka:
-    bootstrap-servers: localhost:29092
+    bootstrap-servers: kafka:29092     # <-- 'kafka' container name
 
     consumer:
       group-id: customer-service-group
@@ -28,4 +41,3 @@ spring:
 
     topic:
       name: customer.events
-
