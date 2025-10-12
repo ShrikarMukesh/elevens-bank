@@ -1,6 +1,6 @@
-package com.auth.config;
+package com.accounts.config;
 
-import com.auth.filter.JwtAuthenticationFilter;
+import com.accounts.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,9 +23,9 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        // ✅ Make /auth/** endpoints public
-                        .requestMatchers("/auth/**").permitAll()
-                        // ✅ Everything else needs authentication
+                        // ✅ allow health or status checks
+                        .requestMatchers("/api/accounts/status").permitAll()
+                        // ✅ everything else requires authentication
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session ->

@@ -32,6 +32,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
 
+        // ✅ 1. Skip authentication for public endpoints
+        String path = request.getServletPath();
+        if (path.startsWith("/auth")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         try {
             final String authHeader = request.getHeader("Authorization");
             if (authHeader == null || !authHeader.startsWith("Bearer ")) {
@@ -45,21 +52,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 UserDetails userDetails = authService.loadUserByUsername(username);
 
-                // Validate JWT signature & expiry
                 if (!jwtUtil.validateToken(jwt)) {
                     response.sendError(HttpStatus.UNAUTHORIZED.value(), "Invalid JWT token");
                     return;
                 }
 
-                // Check if session is revoked
                 Session session = sessionRepository.findByAccessToken(jwt)
                         .orElseThrow(() -> new RuntimeException("Session not found"));
+
                 if (Boolean.TRUE.equals(session.getIsRevoked())) {
                     response.sendError(HttpStatus.UNAUTHORIZED.value(), "Token revoked");
                     return;
                 }
 
-                // Set authentication context
                 UsernamePasswordAuthenticationToken authToken =
                         new UsernamePasswordAuthenticationToken(
                                 userDetails, null, userDetails.getAuthorities()
@@ -71,7 +76,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
 
         } catch (Exception ex) {
-            // Catch-all: send 401 Unauthorized
             response.sendError(HttpStatus.UNAUTHORIZED.value(), "Authentication Failed: " + ex.getMessage());
         }
     }

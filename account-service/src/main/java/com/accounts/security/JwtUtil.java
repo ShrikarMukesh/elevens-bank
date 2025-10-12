@@ -1,57 +1,37 @@
 package com.accounts.security;
 
-
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import java.security.Key;
-import java.util.Collections;
+import java.util.Date;
 import java.util.List;
-import java.util.Objects;
+import java.util.Map;
 
 @Component
 public class JwtUtil {
-    @Value("${jwt.secret}")
-    private String secret;
 
-    private Key key() {
-        return Keys.hmacShaKeyFor(secret.getBytes());
-    }
+    // ⚠️ Must match Auth-Service secret
+    private static final String SECRET_KEY = "change_this_to_a_very_long_random_secret_key_32bytes_minimum";
 
-    private Claims claims(String token) {
-        return Jwts.parserBuilder().setSigningKey(key()).build().parseClaimsJws(token).getBody();
-    }
-
-    public String extractUsername(String token) {
-        return claims(token).getSubject();
-    }
-
-    public List<String> extractRoles(String token) {
-        Object r = claims(token).get("roles");
-        if (r instanceof List) {
-            return (List<String>) r;
-        } else if (r instanceof String) {
-            return List.of((String) r);
-        }
-        return Collections.emptyList();
-    }
-
-    public Long extractCustomerId(String token) {
-        Object cid = claims(token).get("customerId");
-        if (cid == null) return null;
-        if (cid instanceof Number) return ((Number) cid).longValue();
-        try { return Long.valueOf(String.valueOf(cid)); } catch (Exception e) { return null; }
-    }
+    private final Key key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
 
     public boolean validate(String token) {
         try {
-            claims(token);
+            Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
             return true;
-        } catch (Exception ex) {
+        } catch (JwtException e) {
             return false;
         }
     }
-}
 
+    public String extractUsername(String token) {
+        return Jwts.parserBuilder().setSigningKey(key).build()
+                .parseClaimsJws(token).getBody().getSubject();
+    }
+
+    public String extractRole(String token) {
+        return Jwts.parserBuilder().setSigningKey(key).build()
+                .parseClaimsJws(token).getBody().get("role", String.class);
+    }
+}

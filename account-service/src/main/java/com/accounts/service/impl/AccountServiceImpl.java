@@ -23,30 +23,55 @@ public class AccountServiceImpl implements AccountService {
     }
 
     public Account createAccount(AccountRequest request) {
-        Account account = Account.builder()
-                .customerId(request.getCustomerId())
-                .accountNumber(request.getAccountNumber())
-                .accountType(request.getAccountType()) // Enum directly
-                .balance(request.getBalance() != null ? request.getBalance() : BigDecimal.ZERO)
-                .currency(request.getCurrency() != null ? request.getCurrency() : "INR")
-                .status(AccountStatus.ACTIVE)
-                .build();
+        log.info(">>> Creating account for customerId={}", request.getCustomerId());
+        try {
+            Account account = Account.builder()
+                    .customerId(request.getCustomerId())
+                    .accountNumber(request.getAccountNumber())
+                    .accountType(request.getAccountType()) // Enum directly
+                    .balance(request.getBalance() != null ? request.getBalance() : BigDecimal.ZERO)
+                    .currency(request.getCurrency() != null ? request.getCurrency() : "INR")
+                    .status(AccountStatus.ACTIVE)
+                    .build();
 
-        return accountRepository.save(account);
+            Account savedAccount = accountRepository.save(account);
+            log.info(">>> Account created successfully with accountId={}", savedAccount.getAccountId());
+            return savedAccount;
+        } catch (Exception e) {
+            log.error(">>> Account creation failed for customerId={} due to {}", request.getCustomerId(), e.getMessage(), e);
+            throw e;
+        }
     }
 
 
     public Account getAccountById(Long accountId) {
-        return accountRepository.findById(accountId)
-                .orElseThrow(() -> new RuntimeException("Account not found"));
+        log.info(">>> Fetching account for accountId={}", accountId);
+        try {
+            Account account = accountRepository.findById(accountId)
+                    .orElseThrow(() -> new RuntimeException("Account not found"));
+            log.info(">>> Account found for accountId={}", accountId);
+            return account;
+        } catch (Exception e) {
+            log.error(">>> Error fetching account for accountId={} due to {}", accountId, e.getMessage(), e);
+            throw e;
+        }
     }
 
     public List<Account> getAllAccounts() {
-        return accountRepository.findAll();
+        log.info(">>> Fetching all accounts");
+        try {
+            List<Account> accounts = accountRepository.findAll();
+            log.info(">>> Found {} accounts", accounts.size());
+            return accounts;
+        } catch (Exception e) {
+            log.error(">>> Error fetching all accounts due to {}", e.getMessage(), e);
+            throw e;
+        }
     }
 
     @Override
     public Account updateBalance(Long accountId, Double amount) {
+        log.warn("updateBalance method is not implemented for accountId={}", accountId);
         return null;
     }
 
@@ -74,39 +99,64 @@ public class AccountServiceImpl implements AccountService {
 
     @Transactional
     public void withdraw(Long accountId, BigDecimal amount) {
-        Account account = accountRepository.findById(accountId)
-                .orElseThrow(() -> new RuntimeException("Account not found"));
+        log.info(">>> Withdraw initiated for accountId={} amount={}", accountId, amount);
+        try {
+            Account account = accountRepository.findById(accountId)
+                    .orElseThrow(() -> new RuntimeException("Account not found"));
 
-        if (account.getBalance().compareTo(amount) < 0) {
-            throw new RuntimeException("Insufficient funds");
+            if (account.getBalance().compareTo(amount) < 0) {
+                throw new RuntimeException("Insufficient funds");
+            }
+
+            BigDecimal oldBalance = account.getBalance();
+            BigDecimal newBalance = oldBalance.subtract(amount);
+
+            account.setBalance(newBalance);
+            accountRepository.save(account);
+            log.info(">>> Withdraw successful. Old balance={}, New balance={}", oldBalance, newBalance);
+        } catch (Exception e) {
+            log.error("Withdraw failed for accountId={} due to {}", accountId, e.getMessage(), e);
+            throw e;
         }
-
-        account.setBalance(account.getBalance().subtract(amount));
-        accountRepository.save(account);
     }
 
     @Transactional
     public void transfer(Long fromAccountId, Long toAccountId, BigDecimal amount) {
-        if (fromAccountId.equals(toAccountId)) {
-            throw new RuntimeException("Cannot transfer to same account");
+        log.info(">>> Transfer initiated from accountId={} to accountId={} for amount={}", fromAccountId, toAccountId, amount);
+
+        try {
+            if (fromAccountId.equals(toAccountId)) {
+                throw new RuntimeException("Cannot transfer to same account");
+            }
+
+            // 🔹 Lock both accounts in a fixed order (deadlock prevention)
+            Account fromAccount = accountRepository.findById(fromAccountId)
+                    .orElseThrow(() -> new RuntimeException("Source account not found"));
+
+            Account toAccount = accountRepository.findById(toAccountId)
+                    .orElseThrow(() -> new RuntimeException("Target account not found"));
+
+            BigDecimal fromOldBalance = fromAccount.getBalance();
+            BigDecimal toOldBalance = toAccount.getBalance();
+
+            if (fromOldBalance.compareTo(amount) < 0) {
+                throw new RuntimeException("Insufficient funds");
+            }
+
+            BigDecimal fromNewBalance = fromOldBalance.subtract(amount);
+            BigDecimal toNewBalance = toOldBalance.add(amount);
+
+            fromAccount.setBalance(fromNewBalance);
+            toAccount.setBalance(toNewBalance);
+
+            accountRepository.save(fromAccount);
+            accountRepository.save(toAccount);
+
+            log.info(">>> Transfer successful. fromAccount new balance={}, toAccount new balance={}", fromNewBalance, toNewBalance);
+        } catch (Exception e) {
+            log.error(">>> Transfer failed from accountId={} to accountId={} for amount={} due to {}", fromAccountId, toAccountId, amount, e.getMessage(), e);
+            throw e; // Important: rethrow so transaction rolls back
         }
-
-        // 🔹 Lock both accounts in a fixed order (deadlock prevention)
-        Account fromAccount = accountRepository.findById(fromAccountId)
-                .orElseThrow(() -> new RuntimeException("Source account not found"));
-
-        Account toAccount = accountRepository.findById(toAccountId)
-                .orElseThrow(() -> new RuntimeException("Target account not found"));
-
-        if (fromAccount.getBalance().compareTo(amount) < 0) {
-            throw new RuntimeException("Insufficient funds");
-        }
-
-        fromAccount.setBalance(fromAccount.getBalance().subtract(amount));
-        toAccount.setBalance(toAccount.getBalance().add(amount));
-
-        accountRepository.save(fromAccount);
-        accountRepository.save(toAccount);
     }
 
 }

@@ -1,21 +1,21 @@
 package com.accounts.security;
 
+import com.accounts.entity.Account;
+import com.accounts.repository.AccountRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Component;
 
-public final class SecurityUtils {
+@Component("securityUtils")
+@RequiredArgsConstructor
+public class SecurityUtils {
 
-    private SecurityUtils() {}
-
-    public static Authentication getAuthentication() {
-        return SecurityContextHolder.getContext().getAuthentication();
-    }
+    private final AccountRepository accountRepository;
 
     public static AuthPrincipal getPrincipal() {
-        Authentication auth = getAuthentication();
-        if (auth == null) return null;
-        Object p = auth.getPrincipal();
-        if (p instanceof AuthPrincipal) return (AuthPrincipal) p;
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getPrincipal() instanceof AuthPrincipal p) return p;
         return null;
     }
 
@@ -29,8 +29,10 @@ public final class SecurityUtils {
         return (p != null) ? p.getCustomerId() : null;
     }
 
-    public static String getUsername() {
+    public boolean isOwner(Long accountId) {
         AuthPrincipal p = getPrincipal();
-        return (p != null) ? p.getUsername() : null;
+        if (p == null || p.getCustomerId() == null) return false;
+        Account acc = accountRepository.findById(accountId).orElse(null);
+        return acc != null && acc.getCustomerId().equals(p.getCustomerId());
     }
 }
