@@ -49,11 +49,11 @@ flowchart TB
 
     subgraph Core[Core Microservices]
         APIGateway[API Gateway\n(Spring Cloud Gateway)]
-        AuthService[Auth Service\n(Spring Boot + MySQL/PostgreSQL)]
+        AuthService[Auth Service\n(Spring Boot + MySQL)]
         CustomerService[Customer Service\n(Spring Boot + MongoDB)]
-        AccountService[Account Service\n(Spring Boot + MySQL/PostgreSQL)]
-        TransactionService[Transaction Service\n(Spring Boot + MySQL/PostgreSQL)]
-        CardService[Card Service\n(Spring Boot + MySQL/PostgreSQL)]
+        AccountService[Account Service\n(Spring Boot + MySQL)]
+        TransactionService[Transaction Service\n(Spring Boot + MySQL)]
+        CardService[Card Service\n(Spring Boot + MySQL)]
         LoanService[Loan Service\n(Spring Boot + MongoDB)]
         NotificationService[Notification Service\n(Spring Boot + MongoDB)]
     end
@@ -145,11 +145,11 @@ sequenceDiagram
 ## 5. Technology Stack
 
 | Layer                            | Technologies                                                      |
-| -------------------------------- | ----------------------------------------------------------------- |
+| -------------------------------- |-------------------------------------------------------------------|
 | **Backend Framework**            | Spring Boot 3.x, Spring WebFlux, Spring Data JPA, Spring Security |
 | **Microservices Infrastructure** | Spring Cloud Gateway, Eureka Discovery, Config Server             |
-| **Event Streaming**              | Apache Kafka / Confluent Platform                                 |
-| **Databases**                    | MySQL / PostgreSQL, MongoDB                                       |
+| **Event Streaming**              | Apache Kafka                                                      |
+| **Databases**                    | MySQL, MongoDB                                                    |
 | **Authentication**               | JWT, OAuth2                                                       |
 | **Containerization**             | Docker, Kubernetes (optional)                                     |
 | **Build & CI/CD**                | Maven, Jenkins / GitHub Actions                                   |
