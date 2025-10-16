@@ -4,11 +4,13 @@ import com.auth.entity.Session;
 import com.auth.entity.User;
 import com.auth.service.AuthService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.servlet.http.HttpServletRequest;
 
+@Slf4j
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
@@ -19,7 +21,8 @@ public class AuthController {
     // ----------------- REGISTER -----------------
     @PostMapping("/register")
     public ResponseEntity<User> register(@RequestBody User user) {
-        return ResponseEntity.ok(authService.register(user));
+        User savedUser = authService.register(user);
+        return ResponseEntity.ok(savedUser);
     }
 
     // ----------------- LOGIN -----------------

@@ -2,10 +2,14 @@ package com.auth.service;
 
 import com.auth.entity.Session;
 import com.auth.entity.User;
+import com.auth.kafka.UserCreatedEvent;
 import com.auth.repository.SessionRepository;
 import com.auth.repository.UserRepository;
 import com.auth.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.SendResult;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -14,7 +18,9 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthService implements UserDetailsService {
@@ -24,8 +30,11 @@ public class AuthService implements UserDetailsService {
     private final JwtUtil jwtUtil;
     private final PasswordEncoder passwordEncoder;
 
+    private final KafkaTemplate<String, Object> kafkaTemplate;
+
     // ----------------- REGISTER -----------------
     public User register(User user) {
+        // 1. Basic validation
         if (userRepository.findByUsername(user.getUsername()).isPresent()) {
             throw new RuntimeException("Username already exists");
         }
@@ -33,8 +42,38 @@ public class AuthService implements UserDetailsService {
             throw new RuntimeException("Password cannot be empty");
         }
 
+        // 2. Encode password and persist
         user.setPasswordHash(passwordEncoder.encode(user.getPasswordHash()));
-        return userRepository.save(user);
+        User savedUser = userRepository.save(user);
+
+        // 3. Publish UserCreatedEvent
+        UserCreatedEvent event = new UserCreatedEvent(
+                savedUser.getUserId(),
+                savedUser.getUsername(),
+                savedUser.getEmail(),
+                savedUser.getPhone(),
+                LocalDateTime.now()
+        );
+
+        try {
+            CompletableFuture<SendResult<String, Object>> future =
+                    kafkaTemplate.send("bank.user.event.v1", String.valueOf(event.getUserId()), event);
+
+            future.whenComplete((result, ex) -> {
+                if (ex == null) {
+                    log.info("✅ Successfully published UserCreatedEvent for userId={} to topic={}",
+                            event.getUserId(), result.getRecordMetadata().topic());
+                } else {
+                    log.warn("⚠️ Failed to publish UserCreatedEvent for userId={} — {}", event.getUserId(), ex.getMessage());
+                }
+            });
+
+        } catch (Exception e) {
+            log.error("⚠️ Kafka unavailable — user registered but event not published: {}", e.getMessage());
+        }
+
+
+        return savedUser;
     }
 
     // ----------------- LOGIN -----------------
