@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.math.BigDecimal;
 import java.util.List;
 
+@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/api/accounts")
 @Slf4j
@@ -29,6 +30,14 @@ public class AccountController {
     public ResponseEntity<Account> createAccount(@RequestBody AccountRequest account) {
         return ResponseEntity.ok(accountServiceImpl.createAccount(account));
     }
+
+    @GetMapping("/customer/{customerId}")
+    @PreAuthorize("hasRole('ADMIN') or @securityUtils.isCustomerOwner(#customerId)")
+    public ResponseEntity<List<Account>> getAccountsByCustomer(@PathVariable String customerId) {
+        List<Account> accounts = accountServiceImpl.getAccountsByCustomerId(customerId);
+        return ResponseEntity.ok(accounts);
+    }
+
 
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN') or @securityUtils.isOwner(#id)")

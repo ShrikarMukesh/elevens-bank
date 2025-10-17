@@ -4,9 +4,18 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
-@Table(name = "accounts")
+@Table(
+        name = "accounts",
+        indexes = {
+                @Index(name = "idx_customer_id", columnList = "customerId"),
+                @Index(name = "idx_account_status", columnList = "status"),
+                @Index(name = "idx_branch_code", columnList = "branchCode")
+        }
+)
+@EntityListeners(AuditingEntityListener.class)
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -17,7 +26,10 @@ public class Account {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long accountId;
 
-    private Long customerId;
+    @Column(nullable = false)
+    private String customerId; // 🔗 Customer Service
+
+    private Long userId; // 🔗 Auth Service (optional)
 
     @Column(unique = true, nullable = false, length = 20)
     private String accountNumber;
@@ -28,6 +40,9 @@ public class Account {
 
     @Column(precision = 15, scale = 2)
     private BigDecimal balance;
+
+    @Column(precision = 15, scale = 2)
+    private BigDecimal availableBalance;
 
     @Column(length = 3)
     private String currency;
@@ -48,9 +63,14 @@ public class Account {
     @Column(length = 20)
     private AccountStatus status;
 
+    private LocalDateTime accountOpenedDate;
+    private LocalDateTime accountClosedDate;
+
+    private String createdBy;
+    private String updatedBy;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    private LocalDateTime closedAt;
 
     @PrePersist
     protected void onCreate() {
@@ -59,8 +79,10 @@ public class Account {
         if (status == null) status = AccountStatus.ACTIVE;
         if (currency == null) currency = "INR";
         if (balance == null) balance = BigDecimal.ZERO;
+        if (availableBalance == null) availableBalance = balance;
         if (interestRate == null) interestRate = BigDecimal.ZERO;
         if (overdraftLimit == null) overdraftLimit = BigDecimal.ZERO;
+        if (accountOpenedDate == null) accountOpenedDate = LocalDateTime.now();
     }
 
     @PreUpdate
@@ -69,5 +91,5 @@ public class Account {
     }
 
     @Version
-    private Long version; // 🔹 Used for Optimistic Locking
+    private Long version; // 🔹 Optimistic Locking
 }

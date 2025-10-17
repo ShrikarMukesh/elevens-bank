@@ -43,6 +43,10 @@ public class AccountServiceImpl implements AccountService {
         }
     }
 
+    public List<Account> getAccountsByCustomerId(String customerId) {
+        return accountRepository.findByCustomerId(customerId);
+    }
+
 
     public Account getAccountById(Long accountId) {
         log.info(">>> Fetching account for accountId={}", accountId);

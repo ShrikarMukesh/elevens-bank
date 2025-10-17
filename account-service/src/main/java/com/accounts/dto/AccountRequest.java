@@ -13,7 +13,7 @@ import java.math.BigDecimal;
 public class AccountRequest {
 
     @NotNull(message = "Customer ID is required")
-    private Long customerId;
+    private String customerId;
 
     @NotBlank(message = "Account number is required")
     @Size(min = 10, max = 20, message = "Account number must be between 10 and 20 characters")
