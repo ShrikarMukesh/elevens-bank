@@ -2,6 +2,7 @@ package com.auth.service;
 
 import com.auth.entity.Session;
 import com.auth.entity.User;
+import com.auth.kafka.EventPublisherService;
 import com.auth.kafka.UserCreatedEvent;
 import com.auth.repository.SessionRepository;
 import com.auth.repository.UserRepository;
@@ -30,7 +31,7 @@ public class AuthService implements UserDetailsService {
     private final JwtUtil jwtUtil;
     private final PasswordEncoder passwordEncoder;
 
-    private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final EventPublisherService eventPublisherService;
 
     // ----------------- REGISTER -----------------
     public User register(User user) {
@@ -55,24 +56,8 @@ public class AuthService implements UserDetailsService {
                 LocalDateTime.now()
         );
 
-        try {
-            CompletableFuture<SendResult<String, Object>> future =
-                    kafkaTemplate.send("bank.user.event.v1", String.valueOf(event.getUserId()), event);
-
-            future.whenComplete((result, ex) -> {
-                if (ex == null) {
-                    log.info("✅ Successfully published UserCreatedEvent for userId={} to topic={}",
-                            event.getUserId(), result.getRecordMetadata().topic());
-                } else {
-                    log.warn("⚠️ Failed to publish UserCreatedEvent for userId={} — {}", event.getUserId(), ex.getMessage());
-                }
-            });
-
-        } catch (Exception e) {
-            log.error("⚠️ Kafka unavailable — user registered but event not published: {}", e.getMessage());
-        }
-
-
+        // Publish asynchronously via centralized service
+        eventPublisherService.publishEvent("bank.user.event.v1", String.valueOf(event.getUserId()), event);
         return savedUser;
     }
 
