@@ -1,7 +1,7 @@
 package com.auth.entity;
 
 public enum Role {
-    CUSTOMER, ADMIN, STAFF
+    CUSTOMER, ADMIN, STAFF, EMPLOYEE
 }
 
 

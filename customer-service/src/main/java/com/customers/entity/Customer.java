@@ -2,12 +2,14 @@ package com.customers.entity;
 
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.mongodb.core.index.*;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
-import java.time.LocalDate;
+
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 
 @Data
@@ -24,11 +26,14 @@ import java.util.List;
 })
 public class Customer {
 
+    @Id
+    private String id;  // MongoDB internal _id
+
     @Indexed(unique = true)
-    private String customerId;
+    private String customerId; // Generated internally in Customer Service
 
     @Field("userId")
-    private String userId;// 🔗 reference to Auth Service user
+    private String userId; // 🔗 reference to Auth Service user
 
     private String firstName;
     private String lastName;
@@ -41,10 +46,9 @@ public class Customer {
     private List<PhoneNumber> phoneNumbers;
     private List<Address> addresses;
     private KycDetails kyc;
+    private Preferences preferences;
 
     private String status; // ACTIVE, INACTIVE, SUSPENDED, CLOSED
-
-    private Preferences preferences;
 
     @CreatedDate
     private Instant createdAt;

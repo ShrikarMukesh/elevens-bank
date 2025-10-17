@@ -12,8 +12,9 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class UserCreatedEvent {
-    private Long userId;
+    private String userId;      // 🔄 changed from Long → String
     private String username;
+    private String fullName;    // 🔄 added
     private String email;
     private String phone;
     private LocalDateTime createdAt;

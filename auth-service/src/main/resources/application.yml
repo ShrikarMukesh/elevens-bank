@@ -46,7 +46,7 @@ spring:
   # ⚙️ KAFKA CONFIGURATION
   # ----------------------------
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: localhost:29092
     producer:
       acks: all
       retries: 3

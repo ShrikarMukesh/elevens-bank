@@ -13,8 +13,8 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class CustomerEventProducer {
 
-    @Value("${spring.kafka.topic.name}")
-    private String customerTopic;
+//    @Value("${spring.kafka.topic.name}")
+//    private String customerTopic;
 
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
@@ -24,7 +24,7 @@ public class CustomerEventProducer {
 
         while (!sent && attempts < 3) {
             try {
-                kafkaTemplate.send(customerTopic, event.getCustomerId(), event).get(); // synchronous send
+                kafkaTemplate.send("customer.events", event.getCustomerId(), event).get(); // synchronous send
                 sent = true;
                 log.info("CustomerEvent sent: {}", event.getCustomerId());
             } catch (Exception ex) {

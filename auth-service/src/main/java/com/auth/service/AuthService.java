@@ -48,13 +48,14 @@ public class AuthService implements UserDetailsService {
         User savedUser = userRepository.save(user);
 
         // 3. Publish UserCreatedEvent
-        UserCreatedEvent event = new UserCreatedEvent(
-                savedUser.getUserId(),
-                savedUser.getUsername(),
-                savedUser.getEmail(),
-                savedUser.getPhone(),
-                LocalDateTime.now()
-        );
+        UserCreatedEvent event = UserCreatedEvent.builder()
+                .userId(String.valueOf(user.getUserId()))
+                .username(user.getUsername())
+                .fullName(user.getUsername()) // or concatenate if you store first+last in future
+                .email(user.getEmail())
+                .phone(user.getPhone())
+                .createdAt(user.getCreatedAt())
+                .build();
 
         // Publish asynchronously via centralized service
         eventPublisherService.publishEvent("bank.user.event.v1", String.valueOf(event.getUserId()), event);

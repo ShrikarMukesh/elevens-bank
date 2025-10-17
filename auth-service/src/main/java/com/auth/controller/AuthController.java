@@ -14,11 +14,13 @@ import jakarta.servlet.http.HttpServletRequest;
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "*")
 public class AuthController {
 
     private final AuthService authService;
 
     // ----------------- REGISTER -----------------
+    @CrossOrigin(origins = "*")
     @PostMapping("/register")
     public ResponseEntity<User> register(@RequestBody User user) {
         User savedUser = authService.register(user);
@@ -26,6 +28,7 @@ public class AuthController {
     }
 
     // ----------------- LOGIN -----------------
+    @CrossOrigin(origins = "*")
     @PostMapping("/login")
     public ResponseEntity<Session> login(
             @RequestParam String username,

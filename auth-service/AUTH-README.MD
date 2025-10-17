@@ -16,3 +16,12 @@
 | 3️⃣  | Kafka publish fails | Marked as FAILED                  |
 | 4️⃣  | Scheduler retries   | Publishes to Kafka when available |
 | 5️⃣  | Event marked SENT   | ✅ Reliable delivery               |
+
+
+
+| Behavior                                 | Status                |
+| ---------------------------------------- | --------------------- |
+| Scheduler executes every 30 seconds      | ✅ Confirmed           |
+| Hibernate `SELECT` query appears in logs | ✅ Confirmed           |
+| Failed events are retried                | ✅ Works automatically |
+| Retries stop once status = SENT          | ✅ Expected behavior   |
