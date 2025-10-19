@@ -1,5 +1,6 @@
 package com.auth.service;
 
+import com.auth.dto.TokenResponse;
 import com.auth.entity.Session;
 import com.auth.entity.User;
 import com.auth.kafka.EventPublisherService;
@@ -106,7 +107,7 @@ public class AuthService implements UserDetailsService {
     }
 
     // ----------------- REFRESH -----------------
-    public Session refresh(String refreshToken) {
+    public TokenResponse refresh(String refreshToken) {
         Session session = sessionRepository.findByRefreshToken(refreshToken)
                 .orElseThrow(() -> new RuntimeException("Invalid refresh token"));
 
@@ -114,13 +115,24 @@ public class AuthService implements UserDetailsService {
             throw new RuntimeException("Token revoked");
         }
 
-        String newAccessToken = jwtUtil.generateToken(session.getUser().getUsername(),
-                session.getUser().getRole().name());
+        // Generate a new access token (valid for 15 minutes)
+        String newAccessToken = jwtUtil.generateToken(
+                session.getUser().getUsername(),
+                session.getUser().getRole().name()
+        );
+
         session.setAccessToken(newAccessToken);
         session.setExpiryTime(LocalDateTime.now().plusMinutes(15));
+        sessionRepository.save(session);
 
-        return sessionRepository.save(session);
+        return new TokenResponse(
+                newAccessToken,
+                session.getRefreshToken(),
+                "Bearer",
+                15 * 60L
+        );
     }
+
 
     // ----------------- HELPER -----------------
     public User getUserByUsername(String username) {

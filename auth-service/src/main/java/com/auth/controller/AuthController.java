@@ -1,14 +1,18 @@
 package com.auth.controller;
 
+import com.auth.dto.TokenResponse;
 import com.auth.entity.Session;
 import com.auth.entity.User;
 import com.auth.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.servlet.http.HttpServletRequest;
+
+import java.util.Map;
 
 @Slf4j
 @RestController
@@ -52,7 +56,9 @@ public class AuthController {
 
     // ----------------- REFRESH -----------------
     @PostMapping("/refresh")
-    public ResponseEntity<Session> refresh(@RequestParam String refreshToken) {
-        return ResponseEntity.ok(authService.refresh(refreshToken));
+    public ResponseEntity<TokenResponse> refresh(@RequestParam String refreshToken) {
+        TokenResponse response = authService.refresh(refreshToken);
+        return ResponseEntity.ok(response);
     }
+
 }

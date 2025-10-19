@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -21,6 +22,19 @@ public class TransactionService {
     private final TransactionRepository transactionRepository;
     private final AccountClient accountClient;
 
+    public List<Transaction> getTransactionsByAccountId(Long accountId) {
+        log.info("Fetching transactions for accountId={}", accountId);
+        try {
+            List<Transaction> transactions = transactionRepository.findByAccountId(accountId);
+            log.info("Found {} transactions for accountId={}", transactions.size(), accountId);
+            return transactions;
+        } catch (Exception e) {
+            log.error("Error fetching transactions for accountId={} due to {}", accountId, e.getMessage(), e);
+            throw e;
+        }
+    }
+
+    
     /**
      * Perform a transaction: creates DB record, calls Account service with retries, and updates status.
      */
