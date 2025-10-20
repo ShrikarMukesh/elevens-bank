@@ -27,12 +27,33 @@ public class NotificationController {
         return notificationRepository.findAll();
     }
 
+    @GetMapping("/customer/{customerId}")
+    public List<Notification> getNotificationsByCustomerId(@PathVariable String customerId) {
+        return notificationRepository.findByCustomerId(customerId);
+    }
+
     // Get notification by ID
-    @GetMapping("/{id}")
-    public ResponseEntity<Notification> getById(@PathVariable String id) {
-        Optional<Notification> notification = notificationRepository.findById(id);
+    @GetMapping("/{notificationId}")
+    public ResponseEntity<Notification> getByNotificationId(@PathVariable String notificationId) {
+        Optional<Notification> notification = notificationService.getNotificationById(notificationId);
         return notification.map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PatchMapping("/{notificationId}/read")
+    public ResponseEntity<Notification> markAsRead(@PathVariable String notificationId) {
+        return ResponseEntity.ok(notificationService.markAsRead(notificationId));
+    }
+
+    @PatchMapping("/customer/{customerId}/read-all")
+    public ResponseEntity<List<Notification>> markAllAsRead(@PathVariable String customerId) {
+        return ResponseEntity.ok(notificationService.markAllAsRead(customerId));
+    }
+
+    @DeleteMapping("/{notificationId}")
+    public ResponseEntity<Void> deleteNotification(@PathVariable String notificationId) {
+        notificationService.deleteNotification(notificationId);
+        return ResponseEntity.noContent().build();
     }
 
     // Create notification via REST (like Kafka)
@@ -44,16 +65,6 @@ public class NotificationController {
         } catch (Exception e) {
             return ResponseEntity.status(500).body("Failed to process notification: " + e.getMessage());
         }
-    }
-
-    // Delete a notification
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable String id) {
-        if (notificationRepository.existsById(id)) {
-            notificationRepository.deleteById(id);
-            return ResponseEntity.noContent().build();
-        }
-        return ResponseEntity.notFound().build();
     }
 
     // Delete all notifications

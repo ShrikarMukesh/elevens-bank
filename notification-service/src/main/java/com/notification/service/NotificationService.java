@@ -9,6 +9,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.time.Instant;
 import java.util.*;
 
@@ -26,6 +28,88 @@ public class NotificationService {
 
     @Autowired
     private SmsService smsService;
+
+    // 🔹 Get all notifications for a specific customer
+    public List<Notification> getNotificationsByCustomerId(String customerId) {
+        return notificationRepository.findByCustomerId(customerId);
+    }
+
+    // 🔹 Get one notification by ID
+    public Optional<Notification> getNotificationById(String notificationId) {
+        return notificationRepository.findByNotificationId(notificationId);
+    }
+
+    // 🔹 Create (or save) a new notification
+    public Notification saveNotification(Notification notification) {
+        notification.setSentAt(Instant.now());
+        notification.setStatus("SENT");
+        notification.setRetryCount(0);
+
+        // Add minimal audit info if not provided
+        if (notification.getAudit() == null) {
+            notification.setAudit(Map.of(
+                    "createdBy", "SYSTEM",
+                    "createdAt", Instant.now().toString()
+            ));
+        }
+
+        return notificationRepository.save(notification);
+    }
+
+    // 🔹 Mark a single notification as READ
+    @Transactional
+    public Notification markAsRead(String notificationId) {
+        Notification notification = notificationRepository.findByNotificationId(notificationId)
+                .orElseThrow(() -> new RuntimeException("Notification not found: " + notificationId));
+
+        notification.setStatus("READ");
+
+        // Update audit timestamp
+        if (notification.getAudit() != null) {
+            notification.getAudit().put("updatedAt", Instant.now().toString());
+        } else {
+            notification.setAudit(Map.of("updatedAt", Instant.now().toString()));
+        }
+
+        return notificationRepository.save(notification);
+    }
+
+    // 🔹 Mark all notifications for a customer as READ
+    @Transactional
+    public List<Notification> markAllAsRead(String customerId) {
+        List<Notification> notifications = notificationRepository.findByCustomerId(customerId);
+
+        for (Notification n : notifications) {
+            if (!"READ".equalsIgnoreCase(n.getStatus())) {
+                n.setStatus("READ");
+
+                if (n.getAudit() != null) {
+                    n.getAudit().put("updatedAt", Instant.now().toString());
+                } else {
+                    n.setAudit(Map.of("updatedAt", Instant.now().toString()));
+                }
+            }
+        }
+
+        return notificationRepository.saveAll(notifications);
+    }
+
+    // 🔹 Delete a single notification by ID
+    @Transactional
+    public void deleteNotification(String notificationId) {
+        if (!notificationRepository.existsByNotificationId(notificationId)) {
+            throw new RuntimeException("Notification not found: " + notificationId);
+        }
+        notificationRepository.deleteByNotificationId(notificationId);
+    }
+
+    // 🔹 Delete all notifications for a specific customer (optional)
+    public void deleteAllByCustomerId(String customerId) {
+        List<Notification> notifications = notificationRepository.findByCustomerId(customerId);
+        if (!notifications.isEmpty()) {
+            notificationRepository.deleteAll(notifications);
+        }
+    }
 
     public void processNotification(NotificationEvent event) {
         List<NotificationTemplate> optTemplate =
@@ -78,4 +162,6 @@ public class NotificationService {
         }
         log.info("✅ Notification stored successfully for eventType: {}", event.getEventType());
     }
+
+
 }
