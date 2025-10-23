@@ -21,6 +21,7 @@
         <module>customer-service</module>
         <module>auth-service</module>
         <module>api-gateway</module>
+        <module>cards-service</module>
     </modules>
 	<url/>
 	<licenses>
