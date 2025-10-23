@@ -11,7 +11,10 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/accounts")
@@ -33,10 +36,10 @@ public class AccountController {
     @GetMapping("/customer/{customerId}")
     @PreAuthorize("hasRole('ADMIN') or @securityUtils.isCustomerOwner(#customerId)")
     public ResponseEntity<List<Account>> getAccountsByCustomer(@PathVariable String customerId) {
+        log.info("Fetching accounts for customerId={}", customerId);
         List<Account> accounts = accountServiceImpl.getAccountsByCustomerId(customerId);
         return ResponseEntity.ok(accounts);
     }
-
 
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN') or @securityUtils.isOwner(#id)")
@@ -65,9 +68,20 @@ public class AccountController {
     }
 
     @PostMapping("/transfer")
-    @PreAuthorize("hasRole('ADMIN') or @securityUtils.isOwner(#request.fromAccountId)")
-    public ResponseEntity<String> transfer(@RequestBody AccountTransactionRequest request) {
-        accountServiceImpl.transfer(request.getFromAccountId(), request.getToAccountId(), request.getAmount());
-        return ResponseEntity.ok("Transfer successful");
+    public ResponseEntity<Map<String, Object>> transfer(@RequestBody AccountTransactionRequest request) {
+        log.info("API Transfer request received: {}", request);
+        Map<String, Object> response = new HashMap<>();
+        try {
+            accountServiceImpl.transfer(request.getFromAccountId(), request.getToAccountId(), request.getAmount());
+            response.put("status", "SUCCESS");
+            response.put("message", "Transfer completed successfully");
+            response.put("timestamp", LocalDateTime.now());
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("status", "FAILED");
+            response.put("message", e.getMessage());
+            response.put("timestamp", LocalDateTime.now());
+            return ResponseEntity.badRequest().body(response);
+        }
     }
 }

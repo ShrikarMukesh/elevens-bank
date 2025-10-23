@@ -128,38 +128,38 @@ public class AccountServiceImpl implements AccountService {
     public void transfer(Long fromAccountId, Long toAccountId, BigDecimal amount) {
         log.info(">>> Transfer initiated from accountId={} to accountId={} for amount={}", fromAccountId, toAccountId, amount);
 
+        if (fromAccountId.equals(toAccountId)) {
+            throw new IllegalArgumentException("Cannot transfer to same account");
+        }
+
         try {
-            if (fromAccountId.equals(toAccountId)) {
-                throw new RuntimeException("Cannot transfer to same account");
-            }
-
-            // 🔹 Lock both accounts in a fixed order (deadlock prevention)
-            Account fromAccount = accountRepository.findById(fromAccountId)
+            // Lock both accounts
+            Account fromAccount = accountRepository.findByIdForUpdate(fromAccountId)
                     .orElseThrow(() -> new RuntimeException("Source account not found"));
-
-            Account toAccount = accountRepository.findById(toAccountId)
+            Account toAccount = accountRepository.findByIdForUpdate(toAccountId)
                     .orElseThrow(() -> new RuntimeException("Target account not found"));
 
-            BigDecimal fromOldBalance = fromAccount.getBalance();
-            BigDecimal toOldBalance = toAccount.getBalance();
-
-            if (fromOldBalance.compareTo(amount) < 0) {
-                throw new RuntimeException("Insufficient funds");
+            if (fromAccount.getBalance().compareTo(amount) < 0) {
+                throw new IllegalArgumentException("Insufficient funds");
             }
 
-            BigDecimal fromNewBalance = fromOldBalance.subtract(amount);
-            BigDecimal toNewBalance = toOldBalance.add(amount);
+            BigDecimal fromNewBalance = fromAccount.getBalance().subtract(amount);
+            BigDecimal toNewBalance = toAccount.getBalance().add(amount);
 
             fromAccount.setBalance(fromNewBalance);
             toAccount.setBalance(toNewBalance);
 
-            accountRepository.save(fromAccount);
-            accountRepository.save(toAccount);
+            accountRepository.saveAndFlush(fromAccount);
+            accountRepository.saveAndFlush(toAccount);
 
-            log.info(">>> Transfer successful. fromAccount new balance={}, toAccount new balance={}", fromNewBalance, toNewBalance);
+            log.info("✅ Transfer successful. From A/C {} → ₹{} → To A/C {}",
+                    fromAccount.getAccountNumber(), amount, toAccount.getAccountNumber());
+            log.info("Updated Balances: fromAccount={}, toAccount={}", fromNewBalance, toNewBalance);
+
         } catch (Exception e) {
-            log.error(">>> Transfer failed from accountId={} to accountId={} for amount={} due to {}", fromAccountId, toAccountId, amount, e.getMessage(), e);
-            throw e; // Important: rethrow so transaction rolls back
+            log.error("❌ Transfer failed from accountId={} to accountId={} for amount={} due to {}",
+                    fromAccountId, toAccountId, amount, e.getMessage(), e);
+            throw e; // rollback on any failure
         }
     }
 
