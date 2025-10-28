@@ -29,60 +29,62 @@ public class NotificationService {
     @Autowired
     private SmsService smsService;
 
-    // 🔹 Get all notifications for a specific customer
     public List<Notification> getNotificationsByCustomerId(String customerId) {
-        return notificationRepository.findByCustomerId(customerId);
+        log.info("Fetching notifications for customerId: {}", customerId);
+        List<Notification> notifications = notificationRepository.findByCustomerId(customerId);
+        log.info("Found {} notifications for customerId: {}", notifications.size(), customerId);
+        return notifications;
     }
 
-    // 🔹 Get one notification by ID
     public Optional<Notification> getNotificationById(String notificationId) {
-        return notificationRepository.findByNotificationId(notificationId);
+        log.info("Fetching notification by ID: {}", notificationId);
+        Optional<Notification> notification = notificationRepository.findByNotificationId(notificationId);
+        notification.ifPresent(n -> log.info("Found notification with ID: {}", notificationId));
+        return notification;
     }
 
-    // 🔹 Create (or save) a new notification
     public Notification saveNotification(Notification notification) {
+        log.info("Saving notification with ID: {}", notification.getNotificationId());
         notification.setSentAt(Instant.now());
         notification.setStatus("SENT");
         notification.setRetryCount(0);
 
-        // Add minimal audit info if not provided
         if (notification.getAudit() == null) {
-            notification.setAudit(Map.of(
-                    "createdBy", "SYSTEM",
-                    "createdAt", Instant.now().toString()
-            ));
+            notification.setAudit(Map.of("createdBy", "SYSTEM", "createdAt", Instant.now().toString()));
         }
 
-        return notificationRepository.save(notification);
+        Notification savedNotification = notificationRepository.save(notification);
+        log.info("Notification with ID {} saved successfully", savedNotification.getNotificationId());
+        return savedNotification;
     }
 
-    // 🔹 Mark a single notification as READ
     @Transactional
     public Notification markAsRead(String notificationId) {
+        log.info("Marking notification as read: {}", notificationId);
         Notification notification = notificationRepository.findByNotificationId(notificationId)
                 .orElseThrow(() -> new RuntimeException("Notification not found: " + notificationId));
 
         notification.setStatus("READ");
 
-        // Update audit timestamp
         if (notification.getAudit() != null) {
             notification.getAudit().put("updatedAt", Instant.now().toString());
         } else {
             notification.setAudit(Map.of("updatedAt", Instant.now().toString()));
         }
 
-        return notificationRepository.save(notification);
+        Notification updatedNotification = notificationRepository.save(notification);
+        log.info("Notification with ID {} marked as read", updatedNotification.getNotificationId());
+        return updatedNotification;
     }
 
-    // 🔹 Mark all notifications for a customer as READ
     @Transactional
     public List<Notification> markAllAsRead(String customerId) {
+        log.info("Marking all notifications as read for customerId: {}", customerId);
         List<Notification> notifications = notificationRepository.findByCustomerId(customerId);
 
         for (Notification n : notifications) {
             if (!"READ".equalsIgnoreCase(n.getStatus())) {
                 n.setStatus("READ");
-
                 if (n.getAudit() != null) {
                     n.getAudit().put("updatedAt", Instant.now().toString());
                 } else {
@@ -91,37 +93,42 @@ public class NotificationService {
             }
         }
 
-        return notificationRepository.saveAll(notifications);
+        List<Notification> updatedNotifications = notificationRepository.saveAll(notifications);
+        log.info("Marked {} notifications as read for customerId: {}", updatedNotifications.size(), customerId);
+        return updatedNotifications;
     }
 
-    // 🔹 Delete a single notification by ID
     @Transactional
     public void deleteNotification(String notificationId) {
+        log.info("Deleting notification with ID: {}", notificationId);
         if (!notificationRepository.existsByNotificationId(notificationId)) {
+            log.warn("Notification with ID {} not found for deletion", notificationId);
             throw new RuntimeException("Notification not found: " + notificationId);
         }
         notificationRepository.deleteByNotificationId(notificationId);
+        log.info("Notification with ID {} deleted successfully", notificationId);
     }
 
-    // 🔹 Delete all notifications for a specific customer (optional)
     public void deleteAllByCustomerId(String customerId) {
+        log.info("Deleting all notifications for customerId: {}", customerId);
         List<Notification> notifications = notificationRepository.findByCustomerId(customerId);
         if (!notifications.isEmpty()) {
             notificationRepository.deleteAll(notifications);
+            log.info("Deleted {} notifications for customerId: {}", notifications.size(), customerId);
+        } else {
+            log.info("No notifications found for customerId: {} to delete", customerId);
         }
     }
 
     public void processNotification(NotificationEvent event) {
-        List<NotificationTemplate> optTemplate =
-                templateRepository.findByEventTypeAndChannelAndIsActiveTrue(event.getEventType(), event.getChannel());
+        log.info("Processing notification event for eventType: {}", event.getEventType());
+        List<NotificationTemplate> optTemplate = templateRepository.findByEventTypeAndChannelAndIsActiveTrue(event.getEventType(), event.getChannel());
 
         NotificationTemplate template;
-        if (optTemplate.isEmpty()) {
+        if (!optTemplate.isEmpty()) {
             template = optTemplate.get(0);
         } else {
             log.warn("⚠️ No template found for eventType: {}. Using default template.", event.getEventType());
-
-            // Use a default template
             template = NotificationTemplate.builder()
                     .subject("Notification from Your Bank")
                     .message("Dear Customer, an event of type " + event.getEventType() + " occurred.")
@@ -150,18 +157,17 @@ public class NotificationService {
                 .build();
 
         notificationRepository.save(notification);
+        log.info("Notification record created with ID: {}", notification.getNotificationId());
 
-        // Send notification based on channel
         if ("EMAIL".equalsIgnoreCase(event.getChannel())) {
-            //emailService.sendEmail(event.getCustomerId(), subject, message);
+            log.info("Sending EMAIL to customerId: {}", event.getCustomerId());
             smsService.sendSms(event.getCustomerId(), message);
-        } else if ("EMAIL".equalsIgnoreCase(event.getChannel())) {
+        } else if ("SMS".equalsIgnoreCase(event.getChannel())) {
+            log.info("Sending SMS to customerId: {}", event.getCustomerId());
             smsService.sendSms(event.getCustomerId(), message);
         } else {
             log.warn("⚠️ Unknown channel: {} — skipping send.", event.getChannel());
         }
-        log.info("✅ Notification stored successfully for eventType: {}", event.getEventType());
+        log.info("✅ Notification processed and stored successfully for eventType: {}", event.getEventType());
     }
-
-
 }

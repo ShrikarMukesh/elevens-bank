@@ -7,18 +7,21 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
-@Slf4j
 @Service
-@RequiredArgsConstructor
+@Slf4j
 public class EmailService {
 
     private final JavaMailSender mailSender;
+
+    public EmailService(JavaMailSender mailSender) {
+        this.mailSender = mailSender;
+    }
 
     public void sendEmail(String to, String subject, String body) {
         to = "mukesh.shrikar11@gmail.com";
         try {
             SimpleMailMessage message = new SimpleMailMessage();
-            message.setTo(to); // In real case, lookup user email by customerId
+            message.setTo(to);
             message.setSubject(subject);
             message.setText(body);
             mailSender.send(message);
@@ -28,3 +31,4 @@ public class EmailService {
         }
     }
 }
+
