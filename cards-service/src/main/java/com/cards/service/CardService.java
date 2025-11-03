@@ -16,4 +16,6 @@ public interface CardService {
 
     void activateCard(Long id, String pin);
     void resetPin(Long id, String oldPin, String newPin);
+
+    Card reissueCard(Long id);
 }

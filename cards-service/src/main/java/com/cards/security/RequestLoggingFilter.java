@@ -1,10 +1,10 @@
 package com.cards.security;
 
-
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.util.stream.Collectors;
 
 @Component
+@Slf4j
 public class RequestLoggingFilter extends OncePerRequestFilter {
 
     @Override
@@ -29,11 +30,10 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
             String roles = auth.getAuthorities().stream()
                     .map(a -> a.getAuthority())
                     .collect(Collectors.joining(", "));
-            System.out.println("🔐 Authenticated Request → " + request.getMethod() + " " + request.getRequestURI());
-            System.out.println("   👤 User: " + username);
-            System.out.println("   🎭 Roles: " + roles);
+            log.info("Authenticated request: {} {} by user: '{}' with roles: [{}]",
+                    request.getMethod(), request.getRequestURI(), username, roles);
         } else {
-            System.out.println("🚫 Unauthenticated Request → " + request.getMethod() + " " + request.getRequestURI());
+            log.info("Unauthenticated request: {} {}", request.getMethod(), request.getRequestURI());
         }
 
         filterChain.doFilter(request, response);
