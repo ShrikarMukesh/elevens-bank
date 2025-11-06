@@ -23,7 +23,7 @@ public class AccountServiceImpl implements AccountService {
     }
 
     public Account createAccount(AccountRequest request) {
-        log.info(">>> Creating account for customerId={}", request.getCustomerId());
+        log.info("Creating account for customerId={}", request.getCustomerId());
         try {
             Account account = Account.builder()
                     .customerId(request.getCustomerId())
@@ -35,40 +35,48 @@ public class AccountServiceImpl implements AccountService {
                     .build();
 
             Account savedAccount = accountRepository.save(account);
-            log.info(">>> Account created successfully with accountId={}", savedAccount.getAccountId());
+            log.info("Account created successfully with accountId={}", savedAccount.getAccountId());
             return savedAccount;
         } catch (Exception e) {
-            log.error(">>> Account creation failed for customerId={} due to {}", request.getCustomerId(), e.getMessage(), e);
+            log.error("Account creation failed for customerId={} due to {}", request.getCustomerId(), e.getMessage(), e);
             throw e;
         }
     }
 
     public List<Account> getAccountsByCustomerId(String customerId) {
-        return accountRepository.findByCustomerId(customerId);
+        log.info("Fetching accounts for customerId={}", customerId);
+        try {
+            List<Account> accounts = accountRepository.findByCustomerId(customerId);
+            log.info("Found {} accounts for customerId={}", accounts.size(), customerId);
+            return accounts;
+        } catch (Exception e) {
+            log.error("Error fetching accounts for customerId={} due to {}", customerId, e.getMessage(), e);
+            throw e;
+        }
     }
 
 
     public Account getAccountById(Long accountId) {
-        log.info(">>> Fetching account for accountId={}", accountId);
+        log.info("Fetching account for accountId={}", accountId);
         try {
             Account account = accountRepository.findById(accountId)
                     .orElseThrow(() -> new RuntimeException("Account not found"));
-            log.info(">>> Account found for accountId={}", accountId);
+            log.info("Account found for accountId={}", accountId);
             return account;
         } catch (Exception e) {
-            log.error(">>> Error fetching account for accountId={} due to {}", accountId, e.getMessage(), e);
+            log.error("Error fetching account for accountId={} due to {}", accountId, e.getMessage(), e);
             throw e;
         }
     }
 
     public List<Account> getAllAccounts() {
-        log.info(">>> Fetching all accounts");
+        log.info("Fetching all accounts");
         try {
             List<Account> accounts = accountRepository.findAll();
-            log.info(">>> Found {} accounts", accounts.size());
+            log.info("Found {} accounts", accounts.size());
             return accounts;
         } catch (Exception e) {
-            log.error(">>> Error fetching all accounts due to {}", e.getMessage(), e);
+            log.error("Error fetching all accounts due to {}", e.getMessage(), e);
             throw e;
         }
     }
@@ -81,7 +89,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Transactional
     public void deposit(Long accountId, BigDecimal amount) {
-        log.info(">>> Deposit initiated for accountId={} amount={}", accountId, amount);
+        log.info("Deposit initiated for accountId={} amount={}", accountId, amount);
 
         try {
             Account account = accountRepository.findById(accountId)
@@ -93,7 +101,7 @@ public class AccountServiceImpl implements AccountService {
             account.setBalance(newBalance);
             accountRepository.save(account);
 
-            log.info(">>> Deposit successful. Old balance={}, New balance={}", oldBalance, newBalance);
+            log.info("Deposit successful. Old balance={}, New balance={}", oldBalance, newBalance);
 
         } catch (Exception e) {
             log.error("Deposit failed for accountId={} due to {}", accountId, e.getMessage(), e);
@@ -103,7 +111,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Transactional
     public void withdraw(Long accountId, BigDecimal amount) {
-        log.info(">>> Withdraw initiated for accountId={} amount={}", accountId, amount);
+        log.info("Withdraw initiated for accountId={} amount={}", accountId, amount);
         try {
             Account account = accountRepository.findById(accountId)
                     .orElseThrow(() -> new RuntimeException("Account not found"));
@@ -117,7 +125,7 @@ public class AccountServiceImpl implements AccountService {
 
             account.setBalance(newBalance);
             accountRepository.save(account);
-            log.info(">>> Withdraw successful. Old balance={}, New balance={}", oldBalance, newBalance);
+            log.info("Withdraw successful. Old balance={}, New balance={}", oldBalance, newBalance);
         } catch (Exception e) {
             log.error("Withdraw failed for accountId={} due to {}", accountId, e.getMessage(), e);
             throw e;
@@ -126,7 +134,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Transactional
     public void transfer(Long fromAccountId, Long toAccountId, BigDecimal amount) {
-        log.info(">>> Transfer initiated from accountId={} to accountId={} for amount={}", fromAccountId, toAccountId, amount);
+        log.info("Transfer initiated from accountId={} to accountId={} for amount={}", fromAccountId, toAccountId, amount);
 
         if (fromAccountId.equals(toAccountId)) {
             throw new IllegalArgumentException("Cannot transfer to same account");

@@ -25,12 +25,18 @@ public class AccountController {
     private final AccountServiceImpl accountServiceImpl;
 
     @GetMapping("/status")
-    public String getStatus() { return "Account Service Running"; }
+    public String getStatus() {
+        log.info("GET /api/accounts/status");
+        return "Account Service Running";
+    }
 
     @PostMapping("/create")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Account> createAccount(@RequestBody AccountRequest account) {
-        return ResponseEntity.ok(accountServiceImpl.createAccount(account));
+        log.info("POST /api/accounts/create with request: {}", account);
+        Account createdAccount = accountServiceImpl.createAccount(account);
+        log.info("Account created with id: {}", createdAccount.getAccountId());
+        return ResponseEntity.ok(createdAccount);
     }
 
     @GetMapping("/customer/{customerId}")
@@ -38,32 +44,43 @@ public class AccountController {
     public ResponseEntity<List<Account>> getAccountsByCustomer(@PathVariable String customerId) {
         log.info("Fetching accounts for customerId={}", customerId);
         List<Account> accounts = accountServiceImpl.getAccountsByCustomerId(customerId);
+        log.info("Found {} accounts for customerId: {}", accounts.size(), customerId);
         return ResponseEntity.ok(accounts);
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN') or @securityUtils.isOwner(#id)")
     public ResponseEntity<Account> getAccount(@PathVariable Long id) {
-        return ResponseEntity.ok(accountServiceImpl.getAccountById(id));
+        log.info("GET /api/accounts/{}", id);
+        Account account = accountServiceImpl.getAccountById(id);
+        log.info("Account found with id: {}", account.getAccountId());
+        return ResponseEntity.ok(account);
     }
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<Account>> getAllAccounts() {
+        log.info("GET /api/accounts");
+        List<Account> accounts = accountServiceImpl.getAllAccounts();
+        log.info("Found {} accounts", accounts.size());
         return ResponseEntity.ok(accountServiceImpl.getAllAccounts());
     }
 
     @PostMapping("/{id}/deposit")
     @PreAuthorize("hasRole('ADMIN') or @securityUtils.isOwner(#id)")
     public ResponseEntity<String> deposit(@PathVariable Long id, @RequestParam BigDecimal amount) {
+        log.info("POST /api/accounts/{}/deposit with amount: {}", id, amount);
         accountServiceImpl.deposit(id, amount);
+        log.info("Deposit successful for accountId: {}", id);
         return ResponseEntity.ok("Deposit successful");
     }
 
     @PostMapping("/{id}/withdraw")
     @PreAuthorize("hasRole('ADMIN') or @securityUtils.isOwner(#id)")
     public ResponseEntity<String> withdraw(@PathVariable Long id, @RequestParam BigDecimal amount) {
+        log.info("POST /api/accounts/{}/withdraw with amount: {}", id, amount);
         accountServiceImpl.withdraw(id, amount);
+        log.info("Withdrawal successful for accountId: {}", id);
         return ResponseEntity.ok("Withdrawal successful");
     }
 
@@ -76,11 +93,13 @@ public class AccountController {
             response.put("status", "SUCCESS");
             response.put("message", "Transfer completed successfully");
             response.put("timestamp", LocalDateTime.now());
+            log.info("Transfer from accountId: {} to accountId: {} successful", request.getFromAccountId(), request.getToAccountId());
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             response.put("status", "FAILED");
             response.put("message", e.getMessage());
             response.put("timestamp", LocalDateTime.now());
+            log.error("Transfer from accountId: {} to accountId: {} failed with error: {}", request.getFromAccountId(), request.getToAccountId(), e.getMessage());
             return ResponseEntity.badRequest().body(response);
         }
     }
