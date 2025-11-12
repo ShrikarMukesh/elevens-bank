@@ -23,6 +23,7 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/accounts/status").permitAll()
+                        .requestMatchers("/actuator/**").permitAll()
                         .anyRequest().permitAll() // ✅ temporarily permit all for local testing
                 );
 

@@ -2,10 +2,13 @@ package com.accounts;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
-@SpringBootApplication
+@SpringBootApplication(
+        exclude = { UserDetailsServiceAutoConfiguration.class } // move exclusion here
+)
 @EnableTransactionManagement
 @EnableMethodSecurity
 public class AccountServiceApplication {

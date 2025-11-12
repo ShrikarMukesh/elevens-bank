@@ -5,6 +5,7 @@ import com.transaction.dto.AccountTransactionRequest;
 import com.transaction.dto.TransactionRequest;
 import com.transaction.entity.Transaction;
 import com.transaction.entity.TransactionStatus;
+import com.transaction.exception.DownstreamServiceException;
 import com.transaction.repository.TransactionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,23 +40,25 @@ public class TransactionService {
      * Perform a transaction: creates DB record, calls Account service with retries, and updates status.
      */
     public Transaction performTransaction(TransactionRequest request) {
-        // Step 1: Create transaction record in DB
         Transaction txn = createTransactionRecord(request);
-
-        // Step 2: Call Account service with retry logic
         try {
-            callAccountServiceWithRetry(request);
+            callAccountServiceWithRetry(request); // may throw typed Downstream* exceptions
             txn.setStatus(TransactionStatus.SUCCESS);
             log.info("Transaction SUCCESS: {}", txn.getReferenceNumber());
-        } catch (Exception e) {
-            log.error("Transaction FAILED for Account ID {}: {}", request.getAccountId(), e.getMessage(), e);
+        } catch (DownstreamServiceException ex) {
             txn.setStatus(TransactionStatus.FAILED);
-            txn.setDescription("Account service failed: " + e.getMessage());
+            txn.setDescription("Downstream %s failed: %s".formatted(ex.getService(), ex.getMessage()));
+            transactionRepository.save(txn);
+            throw ex; // let @ControllerAdvice map to proper HTTP (502/403/etc.)
+        } catch (Exception e) {
+            txn.setStatus(TransactionStatus.FAILED);
+            txn.setDescription("Unexpected error: " + e.getMessage());
+            transactionRepository.save(txn);
+            throw e;
         }
-
-        // Step 3: Update transaction status in DB
         return transactionRepository.save(txn);
     }
+
 
     /**
      * Create initial transaction record in PENDING state.

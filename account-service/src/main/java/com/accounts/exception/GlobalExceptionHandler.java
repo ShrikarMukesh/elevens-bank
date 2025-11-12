@@ -1,48 +1,75 @@
 package com.accounts.exception;
 
-import lombok.extern.slf4j.Slf4j;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.validation.FieldError;
+import org.springframework.http.ProblemDetail;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
+import java.net.URI;
+import java.time.OffsetDateTime;
 import java.util.Map;
 
 @RestControllerAdvice
-@Slf4j
 public class GlobalExceptionHandler {
 
-    // Handle @Valid validation errors
+    private ProblemDetail pd(HttpStatus status, String title, String detail,
+                             String type, HttpServletRequest req) {
+        ProblemDetail p = ProblemDetail.forStatusAndDetail(status, detail);
+        p.setTitle(title);
+        if (type != null) p.setType(URI.create(type));
+        if (req != null) {
+            p.setInstance(URI.create(req.getRequestURI()));
+        }
+        // enrich with context (traceId from MDC if using Observability/Brave)
+        String traceId = org.slf4j.MDC.get("traceId");
+        if (traceId != null) p.setProperty("traceId", traceId);
+        p.setProperty("timestamp", OffsetDateTime.now().toString());
+        return p;
+    }
+
+    @ExceptionHandler({ AuthorizationDeniedException.class, AccessDeniedException.class })
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ProblemDetail handleAccessDenied(Exception ex, HttpServletRequest req) {
+        return pd(HttpStatus.FORBIDDEN, "Access Denied",
+                "You are not allowed to perform this operation.",
+                "https://errors.yourco.com/access-denied", req);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, String>> handleValidationExceptions(MethodArgumentNotValidException ex) {
-        Map<String, String> errors = new HashMap<>();
-        ex.getBindingResult().getAllErrors().forEach(error -> {
-            String fieldName = ((FieldError) error).getField();
-            String errorMessage = error.getDefaultMessage();
-            errors.put(fieldName, errorMessage);
-        });
-        log.warn("Validation error occurred: {}", errors);
-        return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ProblemDetail handleValidation(MethodArgumentNotValidException ex, HttpServletRequest req) {
+        ProblemDetail p = pd(HttpStatus.BAD_REQUEST, "Validation Failed",
+                "One or more fields are invalid.",
+                "https://errors.yourco.com/validation-error", req);
+        Map<String, String> fieldErrors = ex.getBindingResult().getFieldErrors()
+                .stream().collect(java.util.stream.Collectors.toMap(
+                        e -> e.getField(), e -> e.getDefaultMessage(), (a,b) -> a));
+        p.setProperty("errors", fieldErrors);
+        return p;
     }
 
-    // Handle custom exceptions (you can create your own)
     @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<Map<String, String>> handleResourceNotFound(ResourceNotFoundException ex) {
-        Map<String, String> error = new HashMap<>();
-        error.put("error", ex.getMessage());
-        log.warn("Resource not found: {}", ex.getMessage());
-        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ProblemDetail handleNotFound(ResourceNotFoundException ex, HttpServletRequest req) {
+        return pd(HttpStatus.NOT_FOUND, "Not Found", ex.getMessage(),
+                "https://errors.yourco.com/not-found", req);
     }
 
-    // Fallback for all other exceptions
+    @ExceptionHandler(InsufficientBalanceException.class)
+    @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
+    public ProblemDetail handleBusiness(InsufficientBalanceException ex, HttpServletRequest req) {
+        return pd(HttpStatus.UNPROCESSABLE_ENTITY, "Business Rule Violated", ex.getMessage(),
+                "https://errors.yourco.com/business-rule", req);
+    }
+
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, String>> handleGeneralException(Exception ex) {
-        log.error("An unexpected error occurred", ex); // Logging the full stack trace
-        Map<String, String> error = new HashMap<>();
-        error.put("error", "An unexpected internal server error occurred.");
-        return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ProblemDetail handleGeneric(Exception ex, HttpServletRequest req) {
+        return pd(HttpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error",
+                "An unexpected internal server error occurred.",
+                "https://errors.yourco.com/internal", req);
     }
 }

@@ -1,7 +1,5 @@
 package com.transaction.clients;
 
-
-
 import com.transaction.dto.AccountTransactionRequest;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
