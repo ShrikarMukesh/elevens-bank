@@ -1,0 +1,3 @@
+spring:
+  application:
+    name: vault-elevens-integration
