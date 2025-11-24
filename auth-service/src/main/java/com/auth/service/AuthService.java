@@ -10,8 +10,6 @@ import com.auth.repository.UserRepository;
 import com.auth.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.kafka.support.SendResult;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -20,7 +18,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @Service
@@ -118,8 +115,7 @@ public class AuthService implements UserDetailsService {
         // Generate a new access token (valid for 15 minutes)
         String newAccessToken = jwtUtil.generateToken(
                 session.getUser().getUsername(),
-                session.getUser().getRole().name()
-        );
+                session.getUser().getRole().name());
 
         session.setAccessToken(newAccessToken);
         session.setExpiryTime(LocalDateTime.now().plusMinutes(15));
@@ -129,10 +125,8 @@ public class AuthService implements UserDetailsService {
                 newAccessToken,
                 session.getRefreshToken(),
                 "Bearer",
-                15 * 60L
-        );
+                15 * 60L);
     }
-
 
     // ----------------- HELPER -----------------
     public User getUserByUsername(String username) {

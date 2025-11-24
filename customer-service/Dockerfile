@@ -1,17 +1,9 @@
-# Use a lightweight Java 21 runtime
-FROM eclipse-temurin:21-jre-alpine
-
-# Set working directory
+FROM maven:3.9-eclipse-temurin-21-alpine AS build
 WORKDIR /app
+COPY . .
+RUN mvn clean package -pl customer-service -am -DskipTests
 
-# Copy the pre-built JAR into the container
-COPY target/customer-service-*.jar app.jar
-
-# Expose application port
-EXPOSE 6001
-
-# Set JVM options (optional, container-optimized)
-ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+UseG1GC"
-
-# Run the application
-ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
+FROM eclipse-temurin:21-jre-alpine
+WORKDIR /app
+COPY --from=build /app/customer-service/target/*.jar app.jar
+ENTRYPOINT ["java", "-jar", "app.jar"]
