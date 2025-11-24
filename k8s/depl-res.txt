@@ -1,0 +1,242 @@
+shrikar@shrikar-Latitude-3410:~/Bank/elevens-bank$ ./deploy.sh
+Creating Kind cluster...
+Creating cluster "dev-cluster" ...
+ ✓ Ensuring node image (kindest/node:v1.27.1) 🖼 
+ ✓ Preparing nodes 📦 📦 📦  
+ ✓ Writing configuration 📜 
+ ✓ Starting control-plane 🕹️ 
+ ✓ Installing CNI 🔌 
+ ✓ Installing StorageClass 💾 
+ ✓ Joining worker nodes 🚜 
+Set kubectl context to "kind-dev-cluster"
+You can now use your cluster with:
+
+kubectl cluster-info --context kind-dev-cluster
+
+Not sure what to do next? 😅  Check out https://kind.sigs.k8s.io/docs/user/quick-start/
+Building Docker images...
+[+] Building 91.3s (13/13) FINISHED                                                          docker:default
+ => [internal] load build definition from Dockerfile                                                   0.1s
+ => => transferring dockerfile: 317B                                                                   0.0s
+ => [internal] load metadata for docker.io/library/eclipse-temurin:21-jre-alpine                       4.3s
+ => [internal] load metadata for docker.io/library/maven:3.9-eclipse-temurin-21-alpine                 3.8s
+ => [internal] load .dockerignore                                                                      0.1s
+ => => transferring context: 2B                                                                        0.0s
+ => [build 1/4] FROM docker.io/library/maven:3.9-eclipse-temurin-21-alpine@sha256:922927df2c662cdd47  28.2s
+ => => resolve docker.io/library/maven:3.9-eclipse-temurin-21-alpine@sha256:922927df2c662cdd47ddb1164  0.1s
+ => => sha256:922927df2c662cdd47ddb116443d6bec4696cfae3de1a0ddac8fcc7b87ce61ae 2.73kB / 2.73kB         0.0s
+ => => sha256:8fab75fe25a827c531bf00b60e51ca95ce81fb9687ce919c93ef439c5dece412 2.92kB / 2.92kB         0.0s
+ => => sha256:0f36bddc5073944c5eb957205daeb10848619c4b7914cf4780557fc52b5e9e15 8.03kB / 8.03kB         0.0s
+ => => sha256:2d35ebdb57d9971fea0cac1582aa78935adf8058b2cc32db163c98822e5dfa1b 3.80MB / 3.80MB         1.7s
+ => => extracting sha256:2d35ebdb57d9971fea0cac1582aa78935adf8058b2cc32db163c98822e5dfa1b             84.8s
+ => => sha256:604c946e03558d5b63598812078583a7cacf7c19412e2c71732c6c7e972a09e0 21.11MB / 21.11MB       7.4s
+ => => sha256:a34da1dc78644035d0dc76bd344bb33911551088d2c35e5eae20ee0883291ece 158.10MB / 158.10MB    20.4s
+ => => extracting sha256:604c946e03558d5b63598812078583a7cacf7c19412e2c71732c6c7e972a09e0              3.2s
+ => => sha256:b6a3991c44d0e9016c97a7a16b122fc35778b7bf3abb694a7acabc5f8e6551c8 129B / 129B             8.2s
+ => => sha256:d8cb030eff3c05fd59aaea4464781aa26b800aef5bdbe8b20be44289a6d4fde7 2.28kB / 2.28kB         8.8s
+ => => sha256:504181914afed5e035546b99159817344fa4b561494bb4574ded9e590c3fe0f4 3.42MB / 3.42MB        10.2s
+ => => sha256:4b88098f8a837b36cb6875bc44b1e09b93b5edb47551d618fa5a6c48aa2be85c 9.24MB / 9.24MB        11.9s
+ => => sha256:322b84677728daca35d4dc22dd389a801cf70bf468a9abe389036f056b41a64f 861B / 861B            11.6s
+ => => sha256:4f4fb700ef54461cfa02571ae0db9a0dc1e0cdb5577484a6d75e68dc38e8acc1 32B / 32B              12.3s
+ => => sha256:31f8bff106a454921cdb71b0f27cb83e46473e52abd8aaa00d9ba98e1f9a726f 154B / 154B            12.7s
+ => => extracting sha256:a34da1dc78644035d0dc76bd344bb33911551088d2c35e5eae20ee0883291ece              6.7s
+ => => extracting sha256:b6a3991c44d0e9016c97a7a16b122fc35778b7bf3abb694a7acabc5f8e6551c8              0.0s
+ => => extracting sha256:d8cb030eff3c05fd59aaea4464781aa26b800aef5bdbe8b20be44289a6d4fde7              0.0s
+ => => extracting sha256:504181914afed5e035546b99159817344fa4b561494bb4574ded9e590c3fe0f4              0.2s
+ => => extracting sha256:4b88098f8a837b36cb6875bc44b1e09b93b5edb47551d618fa5a6c48aa2be85c              0.3s
+ => => extracting sha256:322b84677728daca35d4dc22dd389a801cf70bf468a9abe389036f056b41a64f              0.0s
+ => => extracting sha256:4f4fb700ef54461cfa02571ae0db9a0dc1e0cdb5577484a6d75e68dc38e8acc1              0.0s
+ => => extracting sha256:31f8bff106a454921cdb71b0f27cb83e46473e52abd8aaa00d9ba98e1f9a726f              0.0s
+ => [internal] load build context                                                                     17.3s
+ => => transferring context: 404.70MB                                                                 17.3s
+ => [stage-1 1/3] FROM docker.io/library/eclipse-temurin:21-jre-alpine@sha256:326837fba06a8ff5482a17  17.1s
+ => => resolve docker.io/library/eclipse-temurin:21-jre-alpine@sha256:326837fba06a8ff5482a17bafbd6531  0.1s
+ => => sha256:326837fba06a8ff5482a17bafbd65319e64a6e997febb7c85ebe7e3f73c12b11 2.68kB / 2.68kB         0.0s
+ => => sha256:d52fed95b86b9374fcd6f289f022b7d5ef4de6fdbe1e49a59cf7551496027090 1.94kB / 1.94kB         0.0s
+ => => sha256:cb895430823c34591ae6fe71fede85189d0d344383acac20889ac0b5276a9caa 4.09kB / 4.09kB         0.0s
+ => => sha256:2d35ebdb57d9971fea0cac1582aa78935adf8058b2cc32db163c98822e5dfa1b 3.80MB / 3.80MB         1.8s
+ => => sha256:93902f35c01693819c190c354786cbb573f4ef49a5b865d6c34f2197839cc3e4 16.29MB / 16.29MB       2.8s
+ => => sha256:3a857bcc1a1505748a54fef25bb81f303468a26d3de127b6b0044b1ffde6275a 53.17MB / 53.17MB       9.6s
+ => => extracting sha256:2d35ebdb57d9971fea0cac1582aa78935adf8058b2cc32db163c98822e5dfa1b              2.0s
+ => => sha256:15a75c308165465141d861c1b7f7ec799b18fc84d5d8b87396dc29c3aa4894ff 128B / 128B             2.5s
+ => => sha256:23d1cf1d02f064d13d647e4816e26b17678a634769ec583b4eb29d5a68d415f7 2.28kB / 2.28kB         3.2s
+ => => extracting sha256:93902f35c01693819c190c354786cbb573f4ef49a5b865d6c34f2197839cc3e4              2.6s
+ => => extracting sha256:3a857bcc1a1505748a54fef25bb81f303468a26d3de127b6b0044b1ffde6275a              6.8s
+ => => extracting sha256:15a75c308165465141d861c1b7f7ec799b18fc84d5d8b87396dc29c3aa4894ff              0.0s
+ => => extracting sha256:23d1cf1d02f064d13d647e4816e26b17678a634769ec583b4eb29d5a68d415f7              0.0s
+ => [stage-1 2/3] WORKDIR /app                                                                         0.7s
+ => [build 2/4] WORKDIR /app                                                                           0.4s
+ => [build 3/4] COPY . .                                                                               1.9s
+ => [build 4/4] RUN mvn clean package -pl account-service -am -DskipTests                             53.9s
+ => [stage-1 3/3] COPY --from=build /app/account-service/target/*.jar app.jar                          0.2s
+ => exporting to image                                                                                 0.9s
+ => => exporting layers                                                                                0.9s
+ => => writing image sha256:7a163908f83a87201475e18c511d56587a9dd00a2a81d03fbb685df7e2df74ba           0.0s
+ => => naming to docker.io/library/account-service:latest                                              0.0s
+[+] Building 61.2s (13/13) FINISHED                                                          docker:default
+ => [internal] load build definition from Dockerfile                                                   0.0s
+ => => transferring dockerfile: 309B                                                                   0.0s
+ => [internal] load metadata for docker.io/library/eclipse-temurin:21-jre-alpine                       1.0s
+ => [internal] load metadata for docker.io/library/maven:3.9-eclipse-temurin-21-alpine                 1.0s
+ => [internal] load .dockerignore                                                                      0.0s
+ => => transferring context: 2B                                                                        0.0s
+ => [stage-1 1/3] FROM docker.io/library/eclipse-temurin:21-jre-alpine@sha256:326837fba06a8ff5482a17b  0.0s
+ => [internal] load build context                                                                      0.3s
+ => => transferring context: 133.45kB                                                                  0.3s
+ => [build 1/4] FROM docker.io/library/maven:3.9-eclipse-temurin-21-alpine@sha256:922927df2c662cdd47d  0.0s
+ => CACHED [build 2/4] WORKDIR /app                                                                    0.0s
+ => [build 3/4] COPY . .                                                                               1.9s
+ => [build 4/4] RUN mvn clean package -pl api-gateway -am -DskipTests                                 55.4s
+ => CACHED [stage-1 2/3] WORKDIR /app                                                                  0.0s 
+ => [stage-1 3/3] COPY --from=build /app/api-gateway/target/*.jar app.jar                              0.2s 
+ => exporting to image                                                                                 1.0s 
+ => => exporting layers                                                                                1.0s 
+ => => writing image sha256:2ed47417ba5867df505ea85b7bf6906e9edd959c0b45af0091c90a378cbd89e2           0.0s 
+ => => naming to docker.io/library/api-gateway:latest                                                  0.0s 
+[+] Building 62.2s (13/13) FINISHED                                                          docker:default
+ => [internal] load build definition from Dockerfile                                                   0.0s
+ => => transferring dockerfile: 311B                                                                   0.0s
+ => [internal] load metadata for docker.io/library/eclipse-temurin:21-jre-alpine                       0.9s
+ => [internal] load metadata for docker.io/library/maven:3.9-eclipse-temurin-21-alpine                 0.9s
+ => [internal] load .dockerignore                                                                      0.0s
+ => => transferring context: 2B                                                                        0.0s
+ => [build 1/4] FROM docker.io/library/maven:3.9-eclipse-temurin-21-alpine@sha256:922927df2c662cdd47d  0.0s
+ => [internal] load build context                                                                      0.3s
+ => => transferring context: 133.33kB                                                                  0.3s
+ => [stage-1 1/3] FROM docker.io/library/eclipse-temurin:21-jre-alpine@sha256:326837fba06a8ff5482a17b  0.0s
+ => CACHED [build 2/4] WORKDIR /app                                                                    0.0s
+ => CACHED [build 3/4] COPY . .                                                                        0.0s
+ => [build 4/4] RUN mvn clean package -pl auth-service -am -DskipTests                                58.4s
+ => CACHED [stage-1 2/3] WORKDIR /app                                                                  0.0s 
+ => [stage-1 3/3] COPY --from=build /app/auth-service/target/*.jar app.jar                             0.3s 
+ => exporting to image                                                                                 1.1s 
+ => => exporting layers                                                                                1.1s 
+ => => writing image sha256:88def38b84bd77530671ecdd79552dec4d77465bd834e75308ba39b0c943b841           0.0s 
+ => => naming to docker.io/library/auth-service:latest                                                 0.0s 
+[+] Building 59.1s (13/13) FINISHED                                                          docker:default
+ => [internal] load build definition from Dockerfile                                                   0.0s
+ => => transferring dockerfile: 313B                                                                   0.0s
+ => [internal] load metadata for docker.io/library/maven:3.9-eclipse-temurin-21-alpine                 1.0s
+ => [internal] load metadata for docker.io/library/eclipse-temurin:21-jre-alpine                       0.9s
+ => [internal] load .dockerignore                                                                      0.0s
+ => => transferring context: 2B                                                                        0.0s
+ => [build 1/4] FROM docker.io/library/maven:3.9-eclipse-temurin-21-alpine@sha256:922927df2c662cdd47d  0.0s
+ => [stage-1 1/3] FROM docker.io/library/eclipse-temurin:21-jre-alpine@sha256:326837fba06a8ff5482a17b  0.0s
+ => [internal] load build context                                                                      0.9s
+ => => transferring context: 166.12kB                                                                  0.9s
+ => CACHED [build 2/4] WORKDIR /app                                                                    0.0s
+ => [build 3/4] COPY . .                                                                               1.9s
+ => [build 4/4] RUN mvn clean package -pl cards-service -am -DskipTests                               52.8s
+ => CACHED [stage-1 2/3] WORKDIR /app                                                                  0.0s 
+ => [stage-1 3/3] COPY --from=build /app/cards-service/target/*.jar app.jar                            0.2s 
+ => exporting to image                                                                                 0.9s 
+ => => exporting layers                                                                                0.9s 
+ => => writing image sha256:6c338137111fd1cfea8ef89bbd9fb8bd0b0ae6c6d6f837c5e481b836ea0d436a           0.0s 
+ => => naming to docker.io/library/cards-service:latest                                                0.0s 
+[+] Building 62.5s (13/13) FINISHED                                                          docker:default
+ => [internal] load build definition from Dockerfile                                                   0.0s
+ => => transferring dockerfile: 319B                                                                   0.0s
+ => [internal] load metadata for docker.io/library/eclipse-temurin:21-jre-alpine                       2.0s
+ => [internal] load metadata for docker.io/library/maven:3.9-eclipse-temurin-21-alpine                 2.0s
+ => [internal] load .dockerignore                                                                      0.0s
+ => => transferring context: 2B                                                                        0.0s
+ => [build 1/4] FROM docker.io/library/maven:3.9-eclipse-temurin-21-alpine@sha256:922927df2c662cdd47d  0.0s
+ => [internal] load build context                                                                      0.5s
+ => => transferring context: 133.33kB                                                                  0.5s
+ => [stage-1 1/3] FROM docker.io/library/eclipse-temurin:21-jre-alpine@sha256:326837fba06a8ff5482a17b  0.0s
+ => CACHED [build 2/4] WORKDIR /app                                                                    0.0s
+ => CACHED [build 3/4] COPY . .                                                                        0.0s
+ => [build 4/4] RUN mvn clean package -pl customer-service -am -DskipTests                            57.5s
+ => CACHED [stage-1 2/3] WORKDIR /app                                                                  0.0s 
+ => [stage-1 3/3] COPY --from=build /app/customer-service/target/*.jar app.jar                         0.2s 
+ => exporting to image                                                                                 0.8s 
+ => => exporting layers                                                                                0.8s 
+ => => writing image sha256:6edefe9bf2b099e26a380e92288ecc5772cc205554f18524a7039e51177b5a53           0.0s 
+ => => naming to docker.io/library/customer-service:latest                                             0.0s 
+[+] Building 57.4s (13/13) FINISHED                                                          docker:default
+ => [internal] load build definition from Dockerfile                                                   0.0s
+ => => transferring dockerfile: 327B                                                                   0.0s
+ => [internal] load metadata for docker.io/library/eclipse-temurin:21-jre-alpine                       0.9s
+ => [internal] load metadata for docker.io/library/maven:3.9-eclipse-temurin-21-alpine                 0.9s
+ => [internal] load .dockerignore                                                                      0.0s
+ => => transferring context: 2B                                                                        0.0s
+ => [build 1/4] FROM docker.io/library/maven:3.9-eclipse-temurin-21-alpine@sha256:922927df2c662cdd47d  0.0s
+ => [stage-1 1/3] FROM docker.io/library/eclipse-temurin:21-jre-alpine@sha256:326837fba06a8ff5482a17b  0.0s
+ => [internal] load build context                                                                      0.3s
+ => => transferring context: 133.33kB                                                                  0.3s
+ => CACHED [build 2/4] WORKDIR /app                                                                    0.0s
+ => CACHED [build 3/4] COPY . .                                                                        0.0s
+ => [build 4/4] RUN mvn clean package -pl notification-service -am -DskipTests                        53.4s
+ => CACHED [stage-1 2/3] WORKDIR /app                                                                  0.0s 
+ => [stage-1 3/3] COPY --from=build /app/notification-service/target/*.jar app.jar                     0.2s 
+ => exporting to image                                                                                 1.1s 
+ => => exporting layers                                                                                1.0s 
+ => => writing image sha256:f30bba0e5bf63c02c578d0436e34642cf04294916c59d3e140d20afb71fbd4b1           0.0s 
+ => => naming to docker.io/library/notification-service:latest                                         0.0s 
+[+] Building 64.4s (13/13) FINISHED                                                                         docker:default
+ => [internal] load build definition from Dockerfile                                                                  0.0s
+ => => transferring dockerfile: 325B                                                                                  0.0s
+ => [internal] load metadata for docker.io/library/eclipse-temurin:21-jre-alpine                                      0.9s
+ => [internal] load metadata for docker.io/library/maven:3.9-eclipse-temurin-21-alpine                                0.9s
+ => [internal] load .dockerignore                                                                                     0.0s
+ => => transferring context: 2B                                                                                       0.0s
+ => [build 1/4] FROM docker.io/library/maven:3.9-eclipse-temurin-21-alpine@sha256:922927df2c662cdd47ddb116443d6bec46  0.0s
+ => [internal] load build context                                                                                     0.4s
+ => => transferring context: 133.45kB                                                                                 0.3s
+ => [stage-1 1/3] FROM docker.io/library/eclipse-temurin:21-jre-alpine@sha256:326837fba06a8ff5482a17bafbd65319e64a6e  0.0s
+ => CACHED [build 2/4] WORKDIR /app                                                                                   0.0s
+ => CACHED [build 3/4] COPY . .                                                                                       0.0s
+ => [build 4/4] RUN mvn clean package -pl transaction-service -am -DskipTests                                        60.1s
+ => CACHED [stage-1 2/3] WORKDIR /app                                                                                 0.0s 
+ => [stage-1 3/3] COPY --from=build /app/transaction-service/target/*.jar app.jar                                     0.3s 
+ => exporting to image                                                                                                1.1s 
+ => => exporting layers                                                                                               1.1s 
+ => => writing image sha256:6433a517b525549d35fefe1aa002bdac4e056d245badbc8373ff858fbe073441                          0.0s 
+ => => naming to docker.io/library/transaction-service:latest                                                         0.0s 
+Loading images into Kind...
+Image: "account-service:latest" with ID "sha256:7a163908f83a87201475e18c511d56587a9dd00a2a81d03fbb685df7e2df74ba" not yet present on node "dev-cluster-worker2", loading...
+Image: "account-service:latest" with ID "sha256:7a163908f83a87201475e18c511d56587a9dd00a2a81d03fbb685df7e2df74ba" not yet present on node "dev-cluster-control-plane", loading...
+Image: "account-service:latest" with ID "sha256:7a163908f83a87201475e18c511d56587a9dd00a2a81d03fbb685df7e2df74ba" not yet present on node "dev-cluster-worker", loading...
+Image: "api-gateway:latest" with ID "sha256:2ed47417ba5867df505ea85b7bf6906e9edd959c0b45af0091c90a378cbd89e2" not yet present on node "dev-cluster-worker2", loading...
+Image: "api-gateway:latest" with ID "sha256:2ed47417ba5867df505ea85b7bf6906e9edd959c0b45af0091c90a378cbd89e2" not yet present on node "dev-cluster-control-plane", loading...
+Image: "api-gateway:latest" with ID "sha256:2ed47417ba5867df505ea85b7bf6906e9edd959c0b45af0091c90a378cbd89e2" not yet present on node "dev-cluster-worker", loading...
+Image: "auth-service:latest" with ID "sha256:88def38b84bd77530671ecdd79552dec4d77465bd834e75308ba39b0c943b841" not yet present on node "dev-cluster-worker2", loading...
+Image: "auth-service:latest" with ID "sha256:88def38b84bd77530671ecdd79552dec4d77465bd834e75308ba39b0c943b841" not yet present on node "dev-cluster-control-plane", loading...
+Image: "auth-service:latest" with ID "sha256:88def38b84bd77530671ecdd79552dec4d77465bd834e75308ba39b0c943b841" not yet present on node "dev-cluster-worker", loading...
+Image: "cards-service:latest" with ID "sha256:6c338137111fd1cfea8ef89bbd9fb8bd0b0ae6c6d6f837c5e481b836ea0d436a" not yet present on node "dev-cluster-worker2", loading...
+Image: "cards-service:latest" with ID "sha256:6c338137111fd1cfea8ef89bbd9fb8bd0b0ae6c6d6f837c5e481b836ea0d436a" not yet present on node "dev-cluster-control-plane", loading...
+Image: "cards-service:latest" with ID "sha256:6c338137111fd1cfea8ef89bbd9fb8bd0b0ae6c6d6f837c5e481b836ea0d436a" not yet present on node "dev-cluster-worker", loading...
+Image: "customer-service:latest" with ID "sha256:6edefe9bf2b099e26a380e92288ecc5772cc205554f18524a7039e51177b5a53" not yet present on node "dev-cluster-worker2", loading...
+Image: "customer-service:latest" with ID "sha256:6edefe9bf2b099e26a380e92288ecc5772cc205554f18524a7039e51177b5a53" not yet present on node "dev-cluster-control-plane", loading...
+Image: "customer-service:latest" with ID "sha256:6edefe9bf2b099e26a380e92288ecc5772cc205554f18524a7039e51177b5a53" not yet present on node "dev-cluster-worker", loading...
+Image: "notification-service:latest" with ID "sha256:f30bba0e5bf63c02c578d0436e34642cf04294916c59d3e140d20afb71fbd4b1" not yet present on node "dev-cluster-worker2", loading...
+Image: "notification-service:latest" with ID "sha256:f30bba0e5bf63c02c578d0436e34642cf04294916c59d3e140d20afb71fbd4b1" not yet present on node "dev-cluster-control-plane", loading...
+Image: "notification-service:latest" with ID "sha256:f30bba0e5bf63c02c578d0436e34642cf04294916c59d3e140d20afb71fbd4b1" not yet present on node "dev-cluster-worker", loading...
+Image: "transaction-service:latest" with ID "sha256:6433a517b525549d35fefe1aa002bdac4e056d245badbc8373ff858fbe073441" not yet present on node "dev-cluster-worker2", loading...
+Image: "transaction-service:latest" with ID "sha256:6433a517b525549d35fefe1aa002bdac4e056d245badbc8373ff858fbe073441" not yet present on node "dev-cluster-control-plane", loading...
+Image: "transaction-service:latest" with ID "sha256:6433a517b525549d35fefe1aa002bdac4e056d245badbc8373ff858fbe073441" not yet present on node "dev-cluster-worker", loading...
+Applying Kubernetes manifests...
+deployment.apps/account-service created
+service/account-service created
+deployment.apps/api-gateway created
+service/api-gateway created
+deployment.apps/auth-service created
+service/auth-service created
+deployment.apps/cards-service created
+service/cards-service created
+deployment.apps/customer-service created
+service/customer-service created
+deployment.apps/eureka created
+service/eureka created
+deployment.apps/kafka created
+service/kafka created
+deployment.apps/mongo created
+service/mongo created
+deployment.apps/mysql created
+service/mysql created
+deployment.apps/notification-service created
+service/notification-service created
+deployment.apps/transaction-service created
+service/transaction-service created
+error: resource mapping not found for name: "" namespace: "" from "k8s/kind-config.yaml": no matches for kind "Cluster" in version "kind.x-k8s.io/v1alpha4"
+ensure CRDs are installed first
