@@ -23,6 +23,7 @@
         <module>notification-service</module>
         <module>transaction-service</module>
         <module>discovery-service</module>
+		<module>loan-service</module>
     </modules>
 	<url/>
 	<licenses>

@@ -109,5 +109,61 @@ Redis:
 - TTL auto-handled
 */
 
+-- --------------------------------------------------------
+-- Loan Service Tables
+-- --------------------------------------------------------
+
+CREATE TABLE loans (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    customer_id VARCHAR(50) NOT NULL,
+    amount DECIMAL(15,2) NOT NULL,
+    interest_rate DECIMAL(5,2) NOT NULL,
+    tenure_months INT NOT NULL,
+    status VARCHAR(20) NOT NULL, -- PENDING, APPROVED, REJECTED, ACTIVE, CLOSED
+    applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    approved_at TIMESTAMP NULL
+);
+
+CREATE TABLE repayment_schedules (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    loan_id BIGINT NOT NULL,
+    due_date DATE NOT NULL,
+    amount DECIMAL(15,2) NOT NULL,
+    status VARCHAR(20) NOT NULL, -- PENDING, PAID, OVERDUE
+    FOREIGN KEY (loan_id) REFERENCES loans(id) ON DELETE CASCADE
+);
+
+-- --------------------------------------------------------
+-- Dummy Data for Loans
+-- --------------------------------------------------------
+
+INSERT INTO loans (customer_id, amount, interest_rate, tenure_months, status, applied_at, approved_at) VALUES
+('CUST001', 50000.00, 10.50, 12, 'ACTIVE', NOW(), NOW()),
+('CUST002', 100000.00, 9.00, 24, 'PENDING', NOW(), NULL),
+('CUST003', 25000.00, 12.00, 6, 'CLOSED', DATE_SUB(NOW(), INTERVAL 1 YEAR), DATE_SUB(NOW(), INTERVAL 1 YEAR)),
+('CUST004', 75000.00, 11.00, 18, 'APPROVED', NOW(), NOW()),
+('CUST005', 200000.00, 8.50, 36, 'REJECTED', NOW(), NULL),
+('CUST006', 15000.00, 15.00, 3, 'ACTIVE', NOW(), NOW()),
+('CUST007', 300000.00, 8.00, 48, 'PENDING', NOW(), NULL),
+('CUST008', 40000.00, 10.00, 12, 'ACTIVE', NOW(), NOW()),
+('CUST009', 60000.00, 11.50, 12, 'CLOSED', DATE_SUB(NOW(), INTERVAL 2 YEAR), DATE_SUB(NOW(), INTERVAL 2 YEAR)),
+('CUST010', 120000.00, 9.50, 24, 'APPROVED', NOW(), NOW());
+
+-- --------------------------------------------------------
+-- Dummy Data for Repayment Schedules (Linked to Loans)
+-- --------------------------------------------------------
+
+INSERT INTO repayment_schedules (loan_id, due_date, amount, status) VALUES
+(1, DATE_ADD(CURRENT_DATE, INTERVAL 1 MONTH), 4500.00, 'PENDING'),
+(1, DATE_ADD(CURRENT_DATE, INTERVAL 2 MONTH), 4500.00, 'PENDING'),
+(3, DATE_SUB(CURRENT_DATE, INTERVAL 6 MONTH), 4300.00, 'PAID'),
+(3, DATE_SUB(CURRENT_DATE, INTERVAL 5 MONTH), 4300.00, 'PAID'),
+(4, DATE_ADD(CURRENT_DATE, INTERVAL 1 MONTH), 4600.00, 'PENDING'),
+(6, DATE_ADD(CURRENT_DATE, INTERVAL 1 MONTH), 5100.00, 'PENDING'),
+(6, DATE_ADD(CURRENT_DATE, INTERVAL 2 MONTH), 5100.00, 'PENDING'),
+(6, DATE_ADD(CURRENT_DATE, INTERVAL 3 MONTH), 5100.00, 'PENDING'),
+(8, DATE_ADD(CURRENT_DATE, INTERVAL 1 MONTH), 3600.00, 'PENDING'),
+(9, DATE_SUB(CURRENT_DATE, INTERVAL 12 MONTH), 5400.00, 'PAID');
+
 
 

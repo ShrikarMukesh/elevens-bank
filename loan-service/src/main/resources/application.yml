@@ -1,0 +1,68 @@
+# ============================
+# 🌐 SERVER CONFIGURATION
+# ============================
+server:
+  port: 7001
+
+management:
+  server:
+    port: 8086          # Separate port for Actuator (health/info)
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+
+# ============================
+# 🧩 SPRING APPLICATION CONFIG
+# ============================
+spring:
+  application:
+    name: loan-service
+
+  # ----------------------------
+  # 🗄️ DATABASE CONFIGURATION
+  # ----------------------------
+  datasource:
+    url: jdbc:mysql://localhost:3306/elevens-bank?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: shrikar
+    password: Mukesh@123
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update     # (Use 'validate' in production)
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
+
+ 
+
+# ============================
+# 🧠 LOGGING CONFIGURATION
+# ============================
+logging:
+  level:
+    root: INFO
+    org.springframework.web: INFO
+    com.elevens.loanservice: DEBUG
+
+# ============================
+# 🧩 EUREKA DISCOVERY (OPTIONAL)
+# ============================
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    prefer-ip-address: true
+    lease-renewal-interval-in-seconds: 10
+    lease-expiration-duration-in-seconds: 30

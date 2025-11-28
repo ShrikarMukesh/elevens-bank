@@ -3,7 +3,7 @@ set -e
 
 # Create Kind cluster
 echo "Creating Kind cluster..."
-kind create cluster --config kind-config.yaml || true
+kind create cluster --config k8s/kind-config.yaml || true
 
 # Build Docker images
 echo "Building Docker images..."
