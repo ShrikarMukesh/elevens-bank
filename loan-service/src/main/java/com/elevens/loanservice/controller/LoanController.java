@@ -17,13 +17,12 @@ public class LoanController {
     private final LoanService loanService;
 
     @PostMapping("/apply")
-    public ResponseEntity<Loan> applyLoan(@RequestBody Map<String, Object> request) {
-        String customerId = (String) request.get("customerId");
-        BigDecimal amount = new BigDecimal(request.get("amount").toString());
-        BigDecimal interestRate = new BigDecimal(request.get("interestRate").toString());
-        Integer tenureMonths = (Integer) request.get("tenureMonths");
-
-        return ResponseEntity.ok(loanService.applyLoan(customerId, amount, interestRate, tenureMonths));
+    public ResponseEntity<Loan> applyLoan(@RequestBody com.elevens.loanservice.dto.LoanRequest request) {
+        return ResponseEntity.ok(loanService.applyLoan(
+                request.getCustomerId(),
+                request.getAmount(),
+                request.getInterestRate(),
+                request.getTenureMonths()));
     }
 
     @GetMapping("/my-loans")

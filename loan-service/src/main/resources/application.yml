@@ -2,7 +2,7 @@
 # 🌐 SERVER CONFIGURATION
 # ============================
 server:
-  port: 7001
+  port: 8001
 
 management:
   server:

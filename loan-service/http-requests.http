@@ -1,0 +1,39 @@
+### Register User
+POST http://localhost:7001/auth/register
+Content-Type: application/json
+
+{
+  "username": "testuser",
+  "passwordHash": "password123",
+  "email": "testuser@example.com",
+  "phone": "1234567890",
+  "role": "CUSTOMER"
+}
+
+### Login User
+POST http://localhost:7001/auth/login?username=testuser&password=password123
+Content-Type: application/json
+
+> {%
+    client.global.set("auth_token", response.body.accessToken);
+%}
+
+### Apply for a Loan
+POST http://localhost:8001/loans/apply
+Content-Type: application/json
+Authorization: Bearer {{auth_token}}
+
+{
+  "customerId": "CUST12345",
+  "amount": 50000.00,
+  "interestRate": 10.5,
+  "tenureMonths": 24
+}
+
+### Get My Loans
+GET http://localhost:8001/loans/my-loans?customerId=CUST12345
+Authorization: Bearer {{auth_token}}
+
+### Approve Loan (Replace {id} with actual Loan ID)
+PUT http://localhost:8001/loans/1/approve
+Authorization: Bearer {{auth_token}}
