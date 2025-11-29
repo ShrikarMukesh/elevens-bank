@@ -1,0 +1,18 @@
+spring:
+  config:
+    activate:
+      on-profile: prod
+  datasource:
+    url: jdbc:mysql://prod-db-host:3306/elevens-bank
+    username: prod_user
+    password: prod_password
+  kafka:
+    bootstrap-servers: prod-kafka-host:9092
+
+server:
+  port: 7001
+
+logging:
+  level:
+    root: WARN
+    com.elevensbank.auth: INFO

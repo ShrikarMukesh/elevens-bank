@@ -1,0 +1,13 @@
+spring:
+  config:
+    activate:
+      on-profile: local
+  datasource:
+    url: jdbc:mysql://localhost:3306/elevens-bank?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: shrikar
+    password: Mukesh@123
+  kafka:
+    bootstrap-servers: localhost:29093
+
+server:
+  port: 7001

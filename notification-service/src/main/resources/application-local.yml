@@ -1,0 +1,40 @@
+server:
+  port: 5001
+
+spring:
+  profiles:
+    active: dev
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: pmsjavateam3@gmail.com
+    password: ''
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+  application:
+    name: notification-service
+
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017
+      database: elevens-bank
+
+  kafka:
+    bootstrap-servers: localhost:29092
+    consumer:
+      group-id: notification-service-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+    topic:
+      name: bank.events
+twilio:
+  account:
+    sid: ''
+  auth:
+    token: ''
+  from:
+    number: ''

@@ -1,0 +1,13 @@
+spring:
+  config:
+    activate:
+      on-profile: dev
+  datasource:
+    url: jdbc:mysql://dev-db-host:3306/elevens-bank
+    username: dev_user
+    password: dev_password
+  kafka:
+    bootstrap-servers: dev-kafka-host:9092
+
+server:
+  port: 7001

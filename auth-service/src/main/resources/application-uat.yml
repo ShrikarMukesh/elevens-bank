@@ -1,0 +1,13 @@
+spring:
+  config:
+    activate:
+      on-profile: uat
+  datasource:
+    url: jdbc:mysql://uat-db-host:3306/elevens-bank
+    username: uat_user
+    password: uat_password
+  kafka:
+    bootstrap-servers: uat-kafka-host:9092
+
+server:
+  port: 7001

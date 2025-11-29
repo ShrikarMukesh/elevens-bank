@@ -6,7 +6,7 @@ server:
 
 management:
   server:
-    port: 8086          # Separate port for Actuator (health/info)
+    port: 8086
   endpoints:
     web:
       exposure:
@@ -46,7 +46,7 @@ spring:
   # ⚙️ KAFKA CONFIGURATION
   # ----------------------------
   kafka:
-    bootstrap-servers: localhost:29092
+    bootstrap-servers: localhost:29093
     producer:
       acks: all
       retries: 3
@@ -56,21 +56,21 @@ spring:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
       properties:
-        spring.json.add.type.headers: false
+        "[spring.json.add.type.headers]": false
     consumer:
       group-id: auth-service-group
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
-        spring.json.trusted.packages: "*"
+        "[spring.json.trusted.packages]": "*"
     listener:
       ack-mode: record
       missing-topics-fatal: false
     template:
       default-topic: bank.user.event.v1   # default fallback topic
     properties:
-      security.protocol: PLAINTEXT        # adjust if SSL/SASL is used
+      "[security.protocol]": PLAINTEXT        # adjust if SSL/SASL is used
 
 # ============================
 # 🧠 LOGGING CONFIGURATION
