@@ -12,18 +12,24 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.List;
 
-@Service // SRP: Marks this class as a service in the business layer (business logic only, no web concerns)
+@Service // SRP: Marks this class as a service in the business layer (business logic
+         // only, no web concerns)
 @Slf4j
 public class AccountServiceImpl implements AccountService {
-    // DIP: High-level code (controllers) depend on AccountService interface, not this concrete class directly
-    // LSP: Any other implementation of AccountService can substitute this one without breaking callers
-    // ISP: AccountService is a focused interface for account operations (not a "god" interface)
+    // DIP: High-level code (controllers) depend on AccountService interface, not
+    // this concrete class directly
+    // LSP: Any other implementation of AccountService can substitute this one
+    // without breaking callers
+    // ISP: AccountService is a focused interface for account operations (not a
+    // "god" interface)
 
     private final AccountRepository accountRepository;
-    // DIP: Depends on AccountRepository abstraction (Spring Data interface), not low-level DB code
+    // DIP: Depends on AccountRepository abstraction (Spring Data interface), not
+    // low-level DB code
 
     public AccountServiceImpl(AccountRepository accountRepository) {
-        // DIP: Constructor injection – framework provides dependency, service doesn't construct it
+        // DIP: Constructor injection – framework provides dependency, service doesn't
+        // construct it
         this.accountRepository = accountRepository;
     }
 
@@ -44,7 +50,8 @@ public class AccountServiceImpl implements AccountService {
             log.info("Account created successfully with accountId={}", savedAccount.getAccountId());
             return savedAccount;
         } catch (Exception e) {
-            log.error("Account creation failed for customerId={} due to {}", request.getCustomerId(), e.getMessage(), e);
+            log.error("Account creation failed for customerId={} due to {}", request.getCustomerId(), e.getMessage(),
+                    e);
             throw e;
         }
     }
@@ -61,7 +68,6 @@ public class AccountServiceImpl implements AccountService {
             throw e;
         }
     }
-
 
     public Account getAccountById(Long accountId) {
         // SRP: Only responsible for fetching a single account by id
@@ -146,8 +152,10 @@ public class AccountServiceImpl implements AccountService {
 
     @Transactional
     public void transfer(Long fromAccountId, Long toAccountId, BigDecimal amount) {
-        // SRP: Encapsulates full transfer use case (validation + locking + updating two accounts)
-        log.info("Transfer initiated from accountId={} to accountId={} for amount={}", fromAccountId, toAccountId, amount);
+        // SRP: Encapsulates full transfer use case (validation + locking + updating two
+        // accounts)
+        log.info("Transfer initiated from accountId={} to accountId={} for amount={}", fromAccountId, toAccountId,
+                amount);
 
         if (fromAccountId.equals(toAccountId)) {
             throw new IllegalArgumentException("Cannot transfer to same account");
@@ -155,10 +163,17 @@ public class AccountServiceImpl implements AccountService {
 
         try {
             // DIP: Repository provides locking method abstraction
-            Account fromAccount = accountRepository.findByIdForUpdate(fromAccountId)
-                    .orElseThrow(() -> new RuntimeException("Source account not found"));
-            Account toAccount = accountRepository.findByIdForUpdate(toAccountId)
-                    .orElseThrow(() -> new RuntimeException("Target account not found"));
+            // Prevent Deadlock: Always lock accounts in consistent order (smaller ID first)
+            Long firstLockId = fromAccountId < toAccountId ? fromAccountId : toAccountId;
+            Long secondLockId = fromAccountId < toAccountId ? toAccountId : fromAccountId;
+
+            Account firstAccount = accountRepository.findByIdForUpdate(firstLockId)
+                    .orElseThrow(() -> new RuntimeException("Account not found: " + firstLockId));
+            Account secondAccount = accountRepository.findByIdForUpdate(secondLockId)
+                    .orElseThrow(() -> new RuntimeException("Account not found: " + secondLockId));
+
+            Account fromAccount = firstAccount.getAccountId().equals(fromAccountId) ? firstAccount : secondAccount;
+            Account toAccount = firstAccount.getAccountId().equals(toAccountId) ? firstAccount : secondAccount;
 
             if (fromAccount.getBalance().compareTo(amount) < 0) {
                 throw new IllegalArgumentException("Insufficient funds");

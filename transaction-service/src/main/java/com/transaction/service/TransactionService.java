@@ -9,6 +9,10 @@ import com.transaction.exception.DownstreamServiceException;
 import com.transaction.repository.TransactionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +27,10 @@ public class TransactionService {
     private final TransactionRepository transactionRepository;
     private final AccountClient accountClient;
 
+    @Autowired
+    @Lazy
+    private TransactionService self;
+
     public List<Transaction> getTransactionsByAccountId(Long accountId) {
         log.info("Fetching transactions for accountId={}", accountId);
         try {
@@ -35,14 +43,14 @@ public class TransactionService {
         }
     }
 
-    
     /**
-     * Perform a transaction: creates DB record, calls Account service with retries, and updates status.
+     * Perform a transaction: creates DB record, calls Account service with retries,
+     * and updates status.
      */
     public Transaction performTransaction(TransactionRequest request) {
         Transaction txn = createTransactionRecord(request);
         try {
-            callAccountServiceWithRetry(request); // may throw typed Downstream* exceptions
+            self.callAccountServiceWithRetry(request); // may throw typed Downstream* exceptions
             txn.setStatus(TransactionStatus.SUCCESS);
             log.info("Transaction SUCCESS: {}", txn.getReferenceNumber());
         } catch (DownstreamServiceException ex) {
@@ -58,7 +66,6 @@ public class TransactionService {
         }
         return transactionRepository.save(txn);
     }
-
 
     /**
      * Create initial transaction record in PENDING state.
@@ -83,46 +90,34 @@ public class TransactionService {
     /**
      * Call Account service with retry logic for lock wait/optimistic exceptions.
      */
-    private void callAccountServiceWithRetry(TransactionRequest request) {
-        int maxRetries = 3;
-        int attempt = 0;
-
-        while (attempt < maxRetries) {
-            try {
-                switch (request.getTransactionType()) {
-                    case DEPOSIT -> {
-                        log.info("Performing DEPOSIT for account: {}", request.getAccountId());
-                        accountClient.deposit(request.getAccountId(), request.getAmount());
-                    }
-                    case WITHDRAWAL -> {
-                        log.info("Performing WITHDRAWAL for account: {}", request.getAccountId());
-                        accountClient.withdraw(request.getAccountId(), request.getAmount());
-                    }
-                    case TRANSFER -> {
-                        log.info("Performing TRANSFER from account {} to {}",
-                                request.getAccountId(), request.getTargetAccountId());
-                        accountClient.transfer(new AccountTransactionRequest(
-                                request.getAccountId(),
-                                request.getTargetAccountId(),
-                                request.getAmount()
-                        ));
-                    }
+    @Retryable(value = RetryableException.class, maxAttempts = 3, backoff = @Backoff(delay = 100))
+    public void callAccountServiceWithRetry(TransactionRequest request) {
+        try {
+            switch (request.getTransactionType()) {
+                case DEPOSIT -> {
+                    log.info("Performing DEPOSIT for account: {}", request.getAccountId());
+                    accountClient.deposit(request.getAccountId(), request.getAmount());
                 }
-                return; // success
-            } catch (Exception e) {
-                if (isLockTimeoutOrOptimisticLock(e)) {
-                    attempt++;
-                    log.warn("Lock timeout detected, retrying attempt {}/{}", attempt, maxRetries);
-                    try {
-                        Thread.sleep(100); // wait before retry
-                    } catch (InterruptedException ignored) {}
-                } else {
-                    throw e; // fail immediately for other exceptions
+                case WITHDRAWAL -> {
+                    log.info("Performing WITHDRAWAL for account: {}", request.getAccountId());
+                    accountClient.withdraw(request.getAccountId(), request.getAmount());
+                }
+                case TRANSFER -> {
+                    log.info("Performing TRANSFER from account {} to {}",
+                            request.getAccountId(), request.getTargetAccountId());
+                    accountClient.transfer(new AccountTransactionRequest(
+                            request.getAccountId(),
+                            request.getTargetAccountId(),
+                            request.getAmount()));
                 }
             }
+        } catch (Exception e) {
+            if (isLockTimeoutOrOptimisticLock(e)) {
+                log.warn("Lock timeout detected, retrying...");
+                throw new RetryableException("Retryable error", e);
+            }
+            throw e; // fail immediately for other exceptions
         }
-
-        throw new RuntimeException("Account service failed after " + maxRetries + " retries");
     }
 
     /**
@@ -131,5 +126,11 @@ public class TransactionService {
     private boolean isLockTimeoutOrOptimisticLock(Exception e) {
         String msg = e.getMessage() == null ? "" : e.getMessage().toLowerCase();
         return msg.contains("lock wait timeout") || msg.contains("optimistic lock");
+    }
+
+    private static class RetryableException extends RuntimeException {
+        public RetryableException(String message, Throwable cause) {
+            super(message, cause);
+        }
     }
 }
