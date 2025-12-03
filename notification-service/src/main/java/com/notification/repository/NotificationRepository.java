@@ -1,16 +1,18 @@
 package com.notification.repository;
 
 import com.notification.entity.Notification;
-import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.data.mongodb.repository.ReactiveMongoRepository;
 import org.springframework.stereotype.Repository;
-
-import java.util.List;
-import java.util.Optional;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @Repository
-public interface NotificationRepository extends MongoRepository<Notification, String> {
-    List<Notification> findByCustomerId(String customerId);
-    Optional<Notification> findByNotificationId(String notificationId);
-    boolean existsByNotificationId(String notificationId);
-    void deleteByNotificationId(String notificationId);
+public interface NotificationRepository extends ReactiveMongoRepository<Notification, String> {
+    Flux<Notification> findByCustomerId(String customerId);
+
+    Mono<Notification> findByNotificationId(String notificationId);
+
+    Mono<Boolean> existsByNotificationId(String notificationId);
+
+    Mono<Void> deleteByNotificationId(String notificationId);
 }

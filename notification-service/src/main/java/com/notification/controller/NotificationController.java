@@ -8,9 +8,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-import java.util.Optional;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @RestController
 @Slf4j
@@ -22,89 +21,96 @@ public class NotificationController {
     private final NotificationService notificationService;
 
     @GetMapping
-    public List<Notification> getAll() {
+    public Flux<Notification> getAll() {
         log.info("GET /api/notifications - fetching all notifications");
-        List<Notification> notifications = notificationRepository.findAll();
-        log.info("Found {} notifications", notifications.size());
-        return notifications;
+        return notificationRepository.findAll()
+                .doOnComplete(() -> log.info("Finished fetching all notifications"));
     }
 
     @GetMapping("/customer/{customerId}")
-    public List<Notification> getNotificationsByCustomerId(@PathVariable String customerId) {
+    public Flux<Notification> getNotificationsByCustomerId(@PathVariable String customerId) {
         log.info("GET /api/notifications/customer/{} - fetching notifications for customer", customerId);
-        List<Notification> notifications = notificationRepository.findByCustomerId(customerId);
-        log.info("Found {} notifications for customer {}", notifications.size(), customerId);
-        return notifications;
+        return notificationService.getNotificationsByCustomerId(customerId)
+                .doOnComplete(() -> log.info("Finished fetching notifications for customer {}", customerId));
     }
 
     @GetMapping("/{notificationId}")
-    public ResponseEntity<Notification> getByNotificationId(@PathVariable String notificationId) {
+    public Mono<ResponseEntity<Notification>> getByNotificationId(@PathVariable String notificationId) {
         log.info("GET /api/notifications/{} - fetching notification by ID", notificationId);
-        Optional<Notification> notification = notificationService.getNotificationById(notificationId);
-        notification.ifPresent(value -> log.info("Found notification with ID {}", notificationId));
-        return notification.map(ResponseEntity::ok)
-                .orElseGet(() -> {
-                    log.warn("Notification with ID {} not found", notificationId);
-                    return ResponseEntity.notFound().build();
+        return notificationService.getNotificationById(notificationId)
+                .map(ResponseEntity::ok)
+                .defaultIfEmpty(ResponseEntity.notFound().build())
+                .doOnSuccess(response -> {
+                    if (response.getStatusCode().is2xxSuccessful()) {
+                        log.info("Found notification with ID {}", notificationId);
+                    } else {
+                        log.warn("Notification with ID {} not found", notificationId);
+                    }
                 });
     }
 
     @PatchMapping("/{notificationId}/read")
-    public ResponseEntity<Notification> markAsRead(@PathVariable String notificationId) {
+    public Mono<ResponseEntity<Notification>> markAsRead(@PathVariable String notificationId) {
         log.info("PATCH /api/notifications/{}/read - marking notification as read", notificationId);
-        Notification updatedNotification = notificationService.markAsRead(notificationId);
-        log.info("Notification with ID {} marked as read", notificationId);
-        return ResponseEntity.ok(updatedNotification);
+        return notificationService.markAsRead(notificationId)
+                .map(ResponseEntity::ok)
+                .doOnSuccess(n -> log.info("Notification with ID {} marked as read", notificationId));
     }
 
     @PatchMapping("/customer/{customerId}/read-all")
-    public ResponseEntity<List<Notification>> markAllAsRead(@PathVariable String customerId) {
-        log.info("PATCH /api/notifications/customer/{}/read-all - marking all notifications as read for customer", customerId);
-        List<Notification> updatedNotifications = notificationService.markAllAsRead(customerId);
-        log.info("Marked {} notifications as read for customer {}", updatedNotifications.size(), customerId);
-        return ResponseEntity.ok(updatedNotifications);
+    public Mono<ResponseEntity<Flux<Notification>>> markAllAsRead(@PathVariable String customerId) {
+        log.info("PATCH /api/notifications/customer/{}/read-all - marking all notifications as read for customer",
+                customerId);
+        Flux<Notification> updatedNotifications = notificationService.markAllAsRead(customerId);
+        return Mono.just(ResponseEntity.ok(updatedNotifications))
+                .doOnSuccess(v -> log.info("Marking notifications as read for customer {}", customerId));
     }
 
     @DeleteMapping("/{notificationId}")
-    public ResponseEntity<Void> deleteNotification(@PathVariable String notificationId) {
+    public Mono<ResponseEntity<Void>> deleteNotification(@PathVariable String notificationId) {
         log.info("DELETE /api/notifications/{} - deleting notification", notificationId);
-        notificationService.deleteNotification(notificationId);
-        log.info("Notification with ID {} deleted successfully", notificationId);
-        return ResponseEntity.noContent().build();
+        return notificationService.deleteNotification(notificationId)
+                .then(Mono.just(ResponseEntity.noContent().<Void>build()))
+                .doOnSuccess(v -> log.info("Notification with ID {} deleted successfully", notificationId));
     }
 
     @PostMapping("/send")
-    public ResponseEntity<String> sendNotification(@RequestBody NotificationEvent event) {
-        log.info("POST /api/notifications/send - processing notification event for eventType: {}", event.getEventType());
-        try {
-            notificationService.processNotification(event);
-            log.info("Notification processed successfully for eventType: {}", event.getEventType());
-            return ResponseEntity.ok("Notification processed successfully for eventType: " + event.getEventType());
-        } catch (Exception e) {
-            log.error("Failed to process notification for eventType: {}: {}", event.getEventType(), e.getMessage(), e);
-            return ResponseEntity.status(500).body("Failed to process notification: " + e.getMessage());
-        }
+    public Mono<ResponseEntity<String>> sendNotification(@RequestBody NotificationEvent event) {
+        log.info("POST /api/notifications/send - processing notification event for eventType: {}",
+                event.getEventType());
+        return notificationService.processNotification(event)
+                .then(Mono.just(ResponseEntity
+                        .ok("Notification processed successfully for eventType: " + event.getEventType())))
+                .doOnSuccess(
+                        v -> log.info("Notification processed successfully for eventType: {}", event.getEventType()))
+                .onErrorResume(e -> {
+                    log.error("Failed to process notification for eventType: {}: {}", event.getEventType(),
+                            e.getMessage(), e);
+                    return Mono
+                            .just(ResponseEntity.status(500).body("Failed to process notification: " + e.getMessage()));
+                });
     }
 
     @DeleteMapping
-    public ResponseEntity<Void> deleteAll() {
+    public Mono<ResponseEntity<Void>> deleteAll() {
         log.info("DELETE /api/notifications - deleting all notifications");
-        notificationRepository.deleteAll();
-        log.info("All notifications deleted successfully");
-        return ResponseEntity.noContent().build();
+        return notificationRepository.deleteAll()
+                .then(Mono.just(ResponseEntity.noContent().<Void>build()))
+                .doOnSuccess(v -> log.info("All notifications deleted successfully"));
     }
 
     @PostMapping("/sendEmail")
-    public ResponseEntity<String> sendNotificationEmail(@RequestBody NotificationEvent event) {
+    public Mono<ResponseEntity<String>> sendNotificationEmail(@RequestBody NotificationEvent event) {
         log.info("POST /api/notifications/sendEmail - manual trigger for eventType: {}", event.getEventType());
-        try {
-            notificationService.processNotification(event);
-            log.info("Manual notification processed successfully for eventType: {}", event.getEventType());
-            return ResponseEntity.ok("✅ Notification processed successfully.");
-        } catch (Exception e) {
-            log.error("Failed to process manual notification for eventType: {}: {}", event.getEventType(), e.getMessage(), e);
-            return ResponseEntity.internalServerError()
-                    .body("❌ Failed to process notification: " + e.getMessage());
-        }
+        return notificationService.processNotification(event)
+                .then(Mono.just(ResponseEntity.ok("✅ Notification processed successfully.")))
+                .doOnSuccess(v -> log.info("Manual notification processed successfully for eventType: {}",
+                        event.getEventType()))
+                .onErrorResume(e -> {
+                    log.error("Failed to process manual notification for eventType: {}: {}", event.getEventType(),
+                            e.getMessage(), e);
+                    return Mono.just(ResponseEntity.internalServerError()
+                            .body("❌ Failed to process notification: " + e.getMessage()));
+                });
     }
 }

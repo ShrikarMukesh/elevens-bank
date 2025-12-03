@@ -1,0 +1,39 @@
+type Query {
+    accountById(accountId: ID!): Account
+    accountsByCustomerId(customerId: String!): [Account]
+    allAccounts: [Account]
+}
+
+type Account {
+    accountId: ID
+    customerId: String
+    userId: ID
+    accountNumber: String
+    accountType: AccountType
+    balance: String
+    availableBalance: String
+    currency: String
+    branchCode: String
+    interestRate: String
+    overdraftLimit: String
+    nomineeName: String
+    nomineeRelation: String
+    status: AccountStatus
+    accountOpenedDate: String
+    accountClosedDate: String
+    createdAt: String
+    updatedAt: String
+}
+
+enum AccountType {
+    SAVINGS
+    CURRENT
+    FIXED_DEPOSIT
+}
+
+enum AccountStatus {
+    ACTIVE
+    INACTIVE
+    CLOSED
+    FROZEN
+}
