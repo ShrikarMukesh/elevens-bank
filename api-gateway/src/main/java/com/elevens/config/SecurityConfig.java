@@ -15,6 +15,8 @@ import org.springframework.security.web.server.SecurityWebFilterChain;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
+import static org.springframework.security.oauth2.jwt.NimbusReactiveJwtDecoder.*;
+
 @Configuration
 @EnableWebFluxSecurity
 public class SecurityConfig {
@@ -39,9 +41,9 @@ public class SecurityConfig {
     @Bean
     public ReactiveJwtDecoder jwtDecoder() {
         SecretKey key = new SecretKeySpec(jwtSecret.getBytes(), "HmacSHA256");
-        return NimbusReactiveJwtDecoder.builder()
-                .secretKey(key)
+        return NimbusReactiveJwtDecoder.withSecretKey(key)
                 .macAlgorithm(MacAlgorithm.HS256)
                 .build();
     }
+
 }

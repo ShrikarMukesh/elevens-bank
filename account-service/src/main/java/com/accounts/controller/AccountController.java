@@ -80,7 +80,7 @@ public class AccountController {
         log.info("GET /api/accounts");
         List<Account> accounts = accountServiceImpl.getAllAccounts(); // SRP: business logic in service.
         log.info("Found {} accounts", accounts.size());
-        return ResponseEntity.ok(accountServiceImpl.getAllAccounts());
+        return ResponseEntity.ok(accounts);
     }
 
     @PostMapping("/{id}/deposit")
