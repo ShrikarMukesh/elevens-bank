@@ -11,6 +11,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 
 @Service // SRP: Marks this class as a service in the business layer (business logic
          // only, no web concerns)
@@ -69,6 +73,7 @@ public class AccountServiceImpl implements AccountService {
         }
     }
 
+    @Cacheable(value = "accounts", key = "#accountId")
     public Account getAccountById(Long accountId) {
         // SRP: Only responsible for fetching a single account by id
         log.info("Fetching account for accountId={}", accountId);
@@ -104,6 +109,7 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Transactional // SRP: Transactional boundary for this business operation only
+    @CacheEvict(value = "accounts", key = "#accountId")
     public void deposit(Long accountId, BigDecimal amount) {
         // SRP: Handles ONLY deposit rules (validation + balance update)
         log.info("Deposit initiated for accountId={} amount={}", accountId, amount);
@@ -127,6 +133,7 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Transactional
+    @CacheEvict(value = "accounts", key = "#accountId")
     public void withdraw(Long accountId, BigDecimal amount) {
         // SRP: Handles ONLY withdrawal rules (insufficient funds, balance update)
         log.info("Withdraw initiated for accountId={} amount={}", accountId, amount);
@@ -151,6 +158,10 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "accounts", key = "#fromAccountId"),
+            @CacheEvict(value = "accounts", key = "#toAccountId")
+    })
     public void transfer(Long fromAccountId, Long toAccountId, BigDecimal amount) {
         // SRP: Encapsulates full transfer use case (validation + locking + updating two
         // accounts)
