@@ -12,7 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.List;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 
@@ -73,6 +72,11 @@ public class AccountServiceImpl implements AccountService {
         }
     }
 
+    // @Cacheable: Caches the result of this method.
+    // value = "accounts": The name of the cache container (e.g., a Redis hash or Map).
+    // key = "#accountId": The key for the cache entry. Spring Expression Language (SpEL) uses the method argument 'accountId'.
+    // If the data exists in the cache, the method is skipped, and the cached value is returned.
+    // If not, the method executes, and the result is stored in the cache.
     @Cacheable(value = "accounts", key = "#accountId")
     public Account getAccountById(Long accountId) {
         // SRP: Only responsible for fetching a single account by id
@@ -109,6 +113,11 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Transactional // SRP: Transactional boundary for this business operation only
+    // @CacheEvict: Removes an entry from the cache.
+    // value = "accounts": The cache container to modify.
+    // key = "#accountId": The specific key to remove.
+    // This ensures that when an account is updated (deposit), the stale data in the cache is deleted.
+    // The next read (getAccountById) will fetch fresh data from the DB and re-cache it.
     @CacheEvict(value = "accounts", key = "#accountId")
     public void deposit(Long accountId, BigDecimal amount) {
         // SRP: Handles ONLY deposit rules (validation + balance update)
@@ -133,6 +142,9 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Transactional
+    // @CacheEvict: Removes the cache entry for this account.
+    // Similar to deposit, this ensures that after a withdrawal, the cache doesn't hold the old balance.
+    // This maintains data consistency between the database and the cache.
     @CacheEvict(value = "accounts", key = "#accountId")
     public void withdraw(Long accountId, BigDecimal amount) {
         // SRP: Handles ONLY withdrawal rules (insufficient funds, balance update)
@@ -158,6 +170,11 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Transactional
+    // @Caching: Allows multiple cache operations to be applied to a single method.
+    // Since a transfer affects two accounts (sender and receiver), we need to evict both from the cache.
+    // @CacheEvict(key = "#fromAccountId"): Removes the sender's account data from the cache.
+    // @CacheEvict(key = "#toAccountId"): Removes the receiver's account data from the cache.
+    // This ensures both accounts will be re-fetched from the DB with updated balances on the next read.
     @Caching(evict = {
             @CacheEvict(value = "accounts", key = "#fromAccountId"),
             @CacheEvict(value = "accounts", key = "#toAccountId")

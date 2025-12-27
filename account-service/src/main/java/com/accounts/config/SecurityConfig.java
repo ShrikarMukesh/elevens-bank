@@ -30,6 +30,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                                 .requestMatchers("/api/accounts/status").permitAll()
                                 .requestMatchers("/actuator/**").permitAll()
+                                .requestMatchers("/api/accounts/graphiql/**").permitAll()
+                                .requestMatchers("/api/accounts/graphql").permitAll()
                                 .anyRequest().permitAll()
                         // SRP: Only responsible for defining authorization rules (no business logic).
                 );

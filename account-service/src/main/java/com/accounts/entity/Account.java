@@ -35,27 +35,33 @@ public class Account {
     @Column(nullable = false, length = 20)
     private AccountType accountType;
 
+    @Builder.Default
     @Column(precision = 15, scale = 2, nullable = false)
     private BigDecimal balance = BigDecimal.ZERO;
 
+    @Builder.Default
     @Column(precision = 15, scale = 2, nullable = false)
     private BigDecimal availableBalance = BigDecimal.ZERO;
 
+    @Builder.Default
     @Column(length = 3)
     private String currency = "INR";
 
     @Column(length = 10)
     private String branchCode;
 
+    @Builder.Default
     @Column(precision = 5, scale = 2)
     private BigDecimal interestRate = BigDecimal.ZERO;
 
+    @Builder.Default
     @Column(precision = 15, scale = 2)
     private BigDecimal overdraftLimit = BigDecimal.ZERO;
 
     private String nomineeName;
     private String nomineeRelation;
 
+    @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(length = 20)
     private AccountStatus status = AccountStatus.ACTIVE;
@@ -81,14 +87,22 @@ public class Account {
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
-        if (status == null) status = AccountStatus.ACTIVE;
-        if (currency == null) currency = "INR";
-        if (balance == null) balance = BigDecimal.ZERO;
-        if (availableBalance == null) availableBalance = balance; // ✅ important line
-        if (interestRate == null) interestRate = BigDecimal.ZERO;
-        if (overdraftLimit == null) overdraftLimit = BigDecimal.ZERO;
-        if (accountOpenedDate == null) accountOpenedDate = LocalDateTime.now();
-        if (version == null) version = 0L; // ✅ prevent version null
+        if (status == null)
+            status = AccountStatus.ACTIVE;
+        if (currency == null)
+            currency = "INR";
+        if (balance == null)
+            balance = BigDecimal.ZERO;
+        if (availableBalance == null)
+            availableBalance = balance; // ✅ important line
+        if (interestRate == null)
+            interestRate = BigDecimal.ZERO;
+        if (overdraftLimit == null)
+            overdraftLimit = BigDecimal.ZERO;
+        if (accountOpenedDate == null)
+            accountOpenedDate = LocalDateTime.now();
+        if (version == null)
+            version = 0L; // ✅ prevent version null
     }
 
 }
