@@ -80,6 +80,22 @@ public class Account {
         updatedAt = LocalDateTime.now();
     }
 
+    /**
+     * <h2>Interview Topic: Optimistic Locking</h2>
+     * <p>
+     * <b>Q: What is the purpose of this field?</b><br>
+     * A: It is used by JPA for Optimistic Locking. If two transactions try to
+     * update the same record
+     * at the same time:
+     * <ol>
+     * <li>Tx1 reads version 0. Tx2 reads version 0.</li>
+     * <li>Tx1 updates and saves. Version becomes 1.</li>
+     * <li>Tx2 tries to save with version 0. DB sees current version is 1.</li>
+     * <li>DB throws {@code OptimisticLockException}.</li>
+     * </ol>
+     * This prevents "Lost Updates" without expensive database row locks.
+     * </p>
+     */
     @Version
     private Long version; // 🔹 Optimistic Locking
 

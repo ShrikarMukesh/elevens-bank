@@ -32,6 +32,27 @@ public class AuthService implements UserDetailsService {
     private final EventPublisherService eventPublisherService;
 
     // ----------------- REGISTER -----------------
+    /**
+     * Registers a new user.
+     *
+     * <h2>Interview Topic: Password Storage</h2>
+     * <p>
+     * <b>Q: How should you store passwords?</b><br>
+     * A: Never store them in plain text. We use <b>BCrypt</b> (Salted Hashing).
+     * <br>
+     * <b>Q: Why not MD5 or SHA-256?</b><br>
+     * A: They are too fast, making them vulnerable to Brute Force/Rainbow Table
+     * attacks. BCrypt is "slow by design" (Work Factor).
+     * </p>
+     *
+     * <h2>Interview Topic: Event Driven Architecture</h2>
+     * <p>
+     * <b>Q: What happens after registration?</b><br>
+     * A: We don't just save to DB. We publish a {@code UserCreatedEvent} to Kafka.
+     * This allows other services (Notification, Account) to react asynchronously
+     * without tighter coupling (Decoupling).
+     * </p>
+     */
     public User register(User user) {
         // 1. Basic validation
         if (userRepository.findByUsername(user.getUsername()).isPresent()) {
@@ -61,6 +82,28 @@ public class AuthService implements UserDetailsService {
     }
 
     // ----------------- LOGIN -----------------
+    /**
+     * Authenticates a user and issues tokens.
+     *
+     * <h2>Interview Topic: JWT (JSON Web Token)</h2>
+     * <p>
+     * <b>Q: What is the structure of a JWT?</b><br>
+     * A: Header (Algorithm), Payload (Claims: sub, role, exp), Signature (hashed
+     * with Secret Key).
+     * </p>
+     * <p>
+     * <b>Q: Explain Access Token vs Refresh Token?</b><br>
+     * A:
+     * <ul>
+     * <li><b>Access Token:</b> Short-lived (15 mins). Used to access resources.
+     * Stateless.</li>
+     * <li><b>Refresh Token:</b> Long-lived (7 days). Stored in DB. Used to get new
+     * Access Tokens. Stateful (allows Revocation).</li>
+     * </ul>
+     * This "Dual Token Strategy" balances security (short access window) with user
+     * experience (stay logged in).
+     * </p>
+     */
     public Session login(String username, String password, String ipAddress, String userAgent) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -104,6 +147,19 @@ public class AuthService implements UserDetailsService {
     }
 
     // ----------------- REFRESH -----------------
+    /**
+     * Refreshes the Access Token.
+     *
+     * <h2>Interview Topic: Token Rotation</h2>
+     * <p>
+     * <b>Q: Why do we rotate tokens?</b><br>
+     * A: If a Refresh Token is stolen, the attacker can use it indefinitely.
+     * By rotating (issuing a NEW Access Token + potentially a NEW Refresh Token)
+     * and tracking usage, we can detect theft.
+     * (Currently, this implementation only issues new Access Tokens, which is a
+     * Sliding Session strategy).
+     * </p>
+     */
     public TokenResponse refresh(String refreshToken) {
         Session session = sessionRepository.findByRefreshToken(refreshToken)
                 .orElseThrow(() -> new RuntimeException("Invalid refresh token"));

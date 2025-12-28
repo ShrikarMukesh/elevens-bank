@@ -46,6 +46,25 @@ public class TransactionService {
     /**
      * Perform a transaction: creates DB record, calls Account service with retries,
      * and updates status.
+     *
+     * <h2>Interview Topic: Distributed Transactions</h2>
+     * <p>
+     * <b>Q: How do you handle transactions across microservices?</b><br>
+     * A: This method implements the <b>Saga Pattern (Orchestration)</b>.
+     * <ol>
+     * <li><b>Local Tx:</b> Create PENDING transaction record.</li>
+     * <li><b>Remote Call:</b> Call Account Service to update balance.</li>
+     * <li><b>Local Tx:</b> Update status to SUCCESS or FAILED.</li>
+     * </ol>
+     * <br>
+     * <b>Q: What is the "Dual Write Problem" here?</b><br>
+     * A: If the server crashes <i>after</i> the Account Service call but
+     * <i>before</i> updating status to SUCCESS,
+     * the system ends up in an inconsistent state (Money moved, but Transaction
+     * says PENDING).
+     * <b>Solution:</b> Use an Outbox Pattern or reconcile PENDING transactions via
+     * a background scheduler.
+     * </p>
      */
     public Transaction performTransaction(TransactionRequest request) {
         Transaction txn = createTransactionRecord(request);
@@ -89,6 +108,18 @@ public class TransactionService {
 
     /**
      * Call Account service with retry logic for lock wait/optimistic exceptions.
+     *
+     * <h2>Interview Topic: Resiliency & Retries</h2>
+     * <p>
+     * <b>Q: Why use @Retryable?</b><br>
+     * A: Network calls or Database locks are transient failures. Retrying
+     * immediately often fixes the issue.
+     * <br>
+     * <b>Q: What is "Exponential Backoff"?</b><br>
+     * A: The {@code @Backoff} annotation introduces a delay between retries.
+     * Ideally, this delay should increase (100ms, 200ms, 400ms) to avoid hammering
+     * a struggling downstream service ("Thundering Herd" problem).
+     * </p>
      */
     @Retryable(value = RetryableException.class, maxAttempts = 3, backoff = @Backoff(delay = 100))
     public void callAccountServiceWithRetry(TransactionRequest request) {

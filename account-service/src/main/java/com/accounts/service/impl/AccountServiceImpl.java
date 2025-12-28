@@ -15,6 +15,18 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 
+/**
+ * Service Implementation for Account Operations.
+ *
+ * <h2>Interview Topic: Service Layer Responsibility</h2>
+ * <p>
+ * <b>Q: What is the role of the Service Layer?</b><br>
+ * A: It encapsulates business logic, transaction management, and coordinates
+ * between Repositories and other services.
+ * It enforces the "Single Responsibility Principle" (SRP) by keeping business
+ * rules out of the Controller.
+ * </p>
+ */
 @Service // SRP: Marks this class as a service in the business layer (business logic
          // only, no web concerns)
 @Slf4j
@@ -73,10 +85,31 @@ public class AccountServiceImpl implements AccountService {
     }
 
     // @Cacheable: Caches the result of this method.
-    // value = "accounts": The name of the cache container (e.g., a Redis hash or Map).
-    // key = "#accountId": The key for the cache entry. Spring Expression Language (SpEL) uses the method argument 'accountId'.
-    // If the data exists in the cache, the method is skipped, and the cached value is returned.
+    // value = "accounts": The name of the cache container (e.g., a Redis hash or
+    // Map).
+    // key = "#accountId": The key for the cache entry. Spring Expression Language
+    // (SpEL) uses the method argument 'accountId'.
+    // If the data exists in the cache, the method is skipped, and the cached value
+    // is returned.
     // If not, the method executes, and the result is stored in the cache.
+    /**
+     * Retrieves an account by ID.
+     *
+     * <h2>Interview Topic: Caching Strategy</h2>
+     * <p>
+     * <b>Q: Why use @Cacheable here?</b><br>
+     * A: Account details don't change often but are read frequently. Caching
+     * reduces Database load (IOPS)
+     * and latency. We use the "Look-Aside" pattern (lazy loading): check cache, if
+     * miss, check DB and populate cache.
+     * </p>
+     * <p>
+     * <b>Q: What happens if the data changes?</b><br>
+     * A: We must evict or update the cache. See {@code deposit()} or
+     * {@code withdraw()} for @CacheEvict usage.
+     * This ensures "Eventual Consistency".
+     * </p>
+     */
     @Cacheable(value = "accounts", key = "#accountId")
     public Account getAccountById(Long accountId) {
         // SRP: Only responsible for fetching a single account by id
@@ -112,12 +145,31 @@ public class AccountServiceImpl implements AccountService {
         return null;
     }
 
+    /**
+     * Deposits money into an account.
+     *
+     * <h2>Interview Topic: Transaction Management (ACID)</h2>
+     * <p>
+     * <b>Q: What does @Transactional do?</b><br>
+     * A: It ensures Atomicity. If any line fails (throws RuntimeException), the
+     * entire operation rolls back.
+     * Database commits happen only if the method completes successfully.
+     * </p>
+     * <p>
+     * <b>Q: Why @CacheEvict?</b><br>
+     * A: Cache Invalidation. Since we changed the balance, the old cache entry is
+     * stale (dirty read risk).
+     * Removing it forces the next read to fetch fresh data from the DB.
+     * </p>
+     */
     @Transactional // SRP: Transactional boundary for this business operation only
     // @CacheEvict: Removes an entry from the cache.
     // value = "accounts": The cache container to modify.
     // key = "#accountId": The specific key to remove.
-    // This ensures that when an account is updated (deposit), the stale data in the cache is deleted.
-    // The next read (getAccountById) will fetch fresh data from the DB and re-cache it.
+    // This ensures that when an account is updated (deposit), the stale data in the
+    // cache is deleted.
+    // The next read (getAccountById) will fetch fresh data from the DB and re-cache
+    // it.
     @CacheEvict(value = "accounts", key = "#accountId")
     public void deposit(Long accountId, BigDecimal amount) {
         // SRP: Handles ONLY deposit rules (validation + balance update)
@@ -143,7 +195,8 @@ public class AccountServiceImpl implements AccountService {
 
     @Transactional
     // @CacheEvict: Removes the cache entry for this account.
-    // Similar to deposit, this ensures that after a withdrawal, the cache doesn't hold the old balance.
+    // Similar to deposit, this ensures that after a withdrawal, the cache doesn't
+    // hold the old balance.
     // This maintains data consistency between the database and the cache.
     @CacheEvict(value = "accounts", key = "#accountId")
     public void withdraw(Long accountId, BigDecimal amount) {
@@ -169,12 +222,37 @@ public class AccountServiceImpl implements AccountService {
         }
     }
 
+    /**
+     * Transfers money between two accounts.
+     *
+     * <h2>Interview Topic: Concurrency & Deadlocks</h2>
+     * <p>
+     * <b>Q: How do you handle concurrent transfers?</b><br>
+     * A: We use <b>Pessimistic Locking</b> ({@code select for update}) via
+     * {@code findByIdForUpdate}.
+     * This prevents two threads from modifying the same account simultaneously
+     * (Lost Update problem).
+     * </p>
+     * <p>
+     * <b>Q: How do you prevent Deadlocks?</b><br>
+     * A: Deadlock happens if Thread A locks Acc1 then wants Acc2, while Thread B
+     * locks Acc2 then wants Acc1.
+     * <b>Solution:</b> Always acquire locks in a consistent order (e.g., by Account
+     * ID).
+     * <br>
+     * {@code Long firstLockId = fromAccountId < toAccountId ? fromAccountId : toAccountId;}
+     * </p>
+     */
     @Transactional
     // @Caching: Allows multiple cache operations to be applied to a single method.
-    // Since a transfer affects two accounts (sender and receiver), we need to evict both from the cache.
-    // @CacheEvict(key = "#fromAccountId"): Removes the sender's account data from the cache.
-    // @CacheEvict(key = "#toAccountId"): Removes the receiver's account data from the cache.
-    // This ensures both accounts will be re-fetched from the DB with updated balances on the next read.
+    // Since a transfer affects two accounts (sender and receiver), we need to evict
+    // both from the cache.
+    // @CacheEvict(key = "#fromAccountId"): Removes the sender's account data from
+    // the cache.
+    // @CacheEvict(key = "#toAccountId"): Removes the receiver's account data from
+    // the cache.
+    // This ensures both accounts will be re-fetched from the DB with updated
+    // balances on the next read.
     @Caching(evict = {
             @CacheEvict(value = "accounts", key = "#fromAccountId"),
             @CacheEvict(value = "accounts", key = "#toAccountId")
