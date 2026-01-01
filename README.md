@@ -1,11 +1,10 @@
-Perfect ✅ Here's your **enhanced, production-grade `README.md`** for
-🏦 **Elevens Bank — Financial Microservices Architecture**
+🏦 **Elevens Bank — Microservices Architecture**
 This version includes all improvements (C4 component views, resilience, data consistency, security, observability, CI/CD, naming conventions, and author details).
 
 ---
 
 ````markdown
-# 🏦 Elevens Bank — Financial Microservices Architecture
+# 🏦 Elevens Bank — Microservices Architecture
 
 > **Event-driven, Cloud-Native Banking Platform** built with Spring Boot, Spring Cloud, and Apache Kafka  
 > Designed for scalability, high availability, and strong data consistency using **SAGA** and **CQRS** patterns.
@@ -50,7 +49,23 @@ Each service owns its database, ensuring **strong data consistency**, **fault is
 
 ## 2. Architecture (C4 Container View)
 
-### 🧩 System Overview Diagram (C4 Container View)
+### 🧩 High-Level Architecture Diagram
+![Elevens Bank Architecture](assets/elevens_bank_architecture.png)
+
+### 🌊 Understanding the Data Flows (For Junior Devs)
+The diagram above illustrates two primary types of communication in our system:
+
+1.  **🔵 Synchronous User Flow (Solid Blue Arrows)**
+    *   **User -> API Gateway -> Service**: When a user performs an action (e.g., "View Balance"), the request hits the **API Gateway**. The Gateway authenticates the request and forwards it to the specific service (e.g., Account Service). The service responds immediately.
+    *   **Protocol**: HTTP/REST or GraphQL.
+    *   **Critical**: If the service is down, the user gets an error immediately.
+
+2.  **🟠 Asynchronous Event Flow (Dashed Orange Lines)**
+    *   **Service -> Kafka -> Service**: When a state change happens (e.g., "Money Withdrawn"), the service **does not** call other services directly (to avoid coupling).
+    *   **Mechanism**: The service publishes an **Event** to **Apache Kafka**. Other interested services (Notification, Transaction) "listen" for this event and react (e.g., Send SMS, Update Audit Log) when they are ready.
+    *   **Benefit**: If the Notification Service is down, the event stays in Kafka giving us **Resilience**.
+
+### 🧩 Detailed C4 Container View (Mermaid)
 
 ```mermaid
 flowchart TB
