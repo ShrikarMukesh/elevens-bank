@@ -123,7 +123,7 @@ flowchart LR
 
 | Type                     | Description                                                     | Example                                     |
 | ------------------------ | --------------------------------------------------------------- | ------------------------------------------- |
-| **Synchronous (HTTP)**   | Through API Gateway for direct requests                         | `GET /customers/{id}`                       |
+| **Synchronous (HTTP)**   | Through API Gateway for direct requests                         | `GET /customers/{id}` (REST) / `POST /graphql` (GraphQL)    |
 | **Asynchronous (Kafka)** | For distributed transactions & events                           | `txn-commands`, `txn-events`, `user-events` |
 | **SAGA Pattern**         | Transaction coordination using event choreography               | Withdrawals, transfers                      |
 | **Event Notification**   | Any service publishes an event → Notification Service processes | `txn-success`, `loan-approved`              |
@@ -180,8 +180,8 @@ sequenceDiagram
 
 | Service | Pattern | Library |
 |----------|----------|----------|
-| API Gateway | Rate Limiting | Spring Cloud Gateway Filters |
-| Account Service | Circuit Breaker | Resilience4j |
+| API Gateway | Rate Limiting + Circuit Breaker | Spring Cloud Gateway Filters + Resilience4j |
+| Account Service | - | - |
 | Transaction Service | Retry + Bulkhead | Resilience4j |
 | Notification Service | Dead Letter Topic (DLT) | Kafka DLT Mechanism |
 
@@ -243,7 +243,7 @@ jobs:
 
 | Layer | Technologies |
 |-------|---------------|
-| **Backend** | Spring Boot 3.x, Spring WebFlux, Spring Data JPA, Spring Security |
+| **Backend** | Spring Boot 3.x, Spring WebFlux, Spring Data JPA, Spring Security, Spring GraphQL |
 | **Infra** | Spring Cloud Gateway, Eureka Discovery, Config Server |
 | **Event Streaming** | Apache Kafka |
 | **Databases** | MySQL, MongoDB |
@@ -338,8 +338,7 @@ POST /accounts
 
 ## 16. Future Enhancements
 
-- Implement **Circuit Breaker (Resilience4j)** and retries  
-- Add **API Rate Limiting** in Gateway  
+
 - Introduce **Audit Logging Service** for compliance  
 - Enable **OpenTelemetry tracing** across all services  
 - Introduce **Kubernetes Helm charts** for deployment  
