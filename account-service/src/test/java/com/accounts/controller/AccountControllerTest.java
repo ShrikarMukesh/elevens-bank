@@ -28,11 +28,13 @@ import static org.mockito.Mockito.*;
 class AccountControllerTest {
 
     // @Mock: Creates a mock object of the class/interface.
-    // It doesn't execute real code. We define behavior using when(...).thenReturn(...).
+    // It doesn't execute real code. We define behavior using
+    // when(...).thenReturn(...).
     @Mock
     private AccountServiceImpl accountService;
 
-    // @InjectMocks: Injects the mocks (accountService) into this object (accountController).
+    // @InjectMocks: Injects the mocks (accountService) into this object
+    // (accountController).
     @InjectMocks
     private AccountController accountController;
 
@@ -56,11 +58,12 @@ class AccountControllerTest {
                 .currency("INR")
                 .build();
 
-        accountRequest = new AccountRequest();
-        accountRequest.setCustomerId("CUST123");
-        accountRequest.setAccountNumber("1234567890");
-        accountRequest.setAccountType(AccountType.SAVINGS);
-        accountRequest.setBalance(BigDecimal.valueOf(1000));
+        accountRequest = new AccountRequest(
+                "CUST123",
+                "1234567890",
+                AccountType.SAVINGS,
+                BigDecimal.valueOf(1000),
+                "INR");
     }
 
     @Test
@@ -88,7 +91,7 @@ class AccountControllerTest {
     void testGetAccountsByCustomer() {
         // Using the Spy list
         accountListSpy.add(account);
-        
+
         // Stubbing the service to return our spied list
         when(accountService.getAccountsByCustomerId("CUST123")).thenReturn(accountListSpy);
 
@@ -122,7 +125,7 @@ class AccountControllerTest {
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(1, response.getBody().size());
-        verify(accountService, times(2)).getAllAccounts(); // Controller calls it twice (log + return)
+        verify(accountService, times(1)).getAllAccounts();
     }
 
     @Test
@@ -149,10 +152,7 @@ class AccountControllerTest {
 
     @Test
     void testTransfer_Success() {
-        AccountTransactionRequest request = new AccountTransactionRequest();
-        request.setFromAccountId(1L);
-        request.setToAccountId(2L);
-        request.setAmount(BigDecimal.valueOf(300));
+        AccountTransactionRequest request = new AccountTransactionRequest(1L, 2L, BigDecimal.valueOf(300));
 
         doNothing().when(accountService).transfer(1L, 2L, BigDecimal.valueOf(300));
 
@@ -165,10 +165,7 @@ class AccountControllerTest {
 
     @Test
     void testTransfer_Failure() {
-        AccountTransactionRequest request = new AccountTransactionRequest();
-        request.setFromAccountId(1L);
-        request.setToAccountId(2L);
-        request.setAmount(BigDecimal.valueOf(300));
+        AccountTransactionRequest request = new AccountTransactionRequest(1L, 2L, BigDecimal.valueOf(300));
 
         doThrow(new RuntimeException("Insufficient funds"))
                 .when(accountService).transfer(1L, 2L, BigDecimal.valueOf(300));

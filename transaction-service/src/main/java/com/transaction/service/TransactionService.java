@@ -92,13 +92,13 @@ public class TransactionService {
     @Transactional
     public Transaction createTransactionRecord(TransactionRequest request) {
         Transaction txn = Transaction.builder()
-                .accountId(request.getAccountId())
-                .transactionType(request.getTransactionType())
-                .amount(request.getAmount())
-                .modeId(request.getModeId())
+                .accountId(request.accountId())
+                .transactionType(request.transactionType())
+                .amount(request.amount())
+                .modeId(request.modeId())
                 .referenceNumber(UUID.randomUUID().toString())
                 .status(TransactionStatus.PENDING)
-                .description(request.getDescription())
+                .description(request.description())
                 .build();
 
         txn = transactionRepository.save(txn);
@@ -124,22 +124,22 @@ public class TransactionService {
     @Retryable(value = RetryableException.class, maxAttempts = 3, backoff = @Backoff(delay = 100))
     public void callAccountServiceWithRetry(TransactionRequest request) {
         try {
-            switch (request.getTransactionType()) {
+            switch (request.transactionType()) {
                 case DEPOSIT -> {
-                    log.info("Performing DEPOSIT for account: {}", request.getAccountId());
-                    accountClient.deposit(request.getAccountId(), request.getAmount());
+                    log.info("Performing DEPOSIT for account: {}", request.accountId());
+                    accountClient.deposit(request.accountId(), request.amount());
                 }
                 case WITHDRAWAL -> {
-                    log.info("Performing WITHDRAWAL for account: {}", request.getAccountId());
-                    accountClient.withdraw(request.getAccountId(), request.getAmount());
+                    log.info("Performing WITHDRAWAL for account: {}", request.accountId());
+                    accountClient.withdraw(request.accountId(), request.amount());
                 }
                 case TRANSFER -> {
                     log.info("Performing TRANSFER from account {} to {}",
-                            request.getAccountId(), request.getTargetAccountId());
+                            request.accountId(), request.targetAccountId());
                     accountClient.transfer(new AccountTransactionRequest(
-                            request.getAccountId(),
-                            request.getTargetAccountId(),
-                            request.getAmount()));
+                            request.accountId(),
+                            request.targetAccountId(),
+                            request.amount()));
                 }
             }
         } catch (Exception e) {

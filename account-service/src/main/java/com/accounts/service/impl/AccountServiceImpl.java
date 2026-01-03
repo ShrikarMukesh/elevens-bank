@@ -50,14 +50,14 @@ public class AccountServiceImpl implements AccountService {
 
     public Account createAccount(AccountRequest request) {
         // SRP (method level): Only handles "create account" business logic
-        log.info("Creating account for customerId={}", request.getCustomerId());
+        log.info("Creating account for customerId={}", request.customerId());
         try {
             Account account = Account.builder()
-                    .customerId(request.getCustomerId())
-                    .accountNumber(request.getAccountNumber())
-                    .accountType(request.getAccountType()) // Enum directly
-                    .balance(request.getBalance() != null ? request.getBalance() : BigDecimal.ZERO)
-                    .currency(request.getCurrency() != null ? request.getCurrency() : "INR")
+                    .customerId(request.customerId())
+                    .accountNumber(request.accountNumber())
+                    .accountType(request.accountType()) // Enum directly
+                    .balance(request.balance() != null ? request.balance() : BigDecimal.ZERO)
+                    .currency(request.currency() != null ? request.currency() : "INR")
                     .status(AccountStatus.ACTIVE)
                     .build();
 
@@ -65,7 +65,7 @@ public class AccountServiceImpl implements AccountService {
             log.info("Account created successfully with accountId={}", savedAccount.getAccountId());
             return savedAccount;
         } catch (Exception e) {
-            log.error("Account creation failed for customerId={} due to {}", request.getCustomerId(), e.getMessage(),
+            log.error("Account creation failed for customerId={} due to {}", request.customerId(), e.getMessage(),
                     e);
             throw e;
         }

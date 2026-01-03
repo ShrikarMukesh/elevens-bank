@@ -6,10 +6,6 @@ import lombok.Data;
 
 import java.time.LocalDateTime;
 
-@Data
 @Builder
-public class LoginResponse {
-    private String accessToken;
-    private String refreshToken;
-    private LocalDateTime expiryTime;
+public record LoginResponse(String accessToken, String refreshToken, LocalDateTime expiryTime) {
 }

@@ -6,17 +6,13 @@ import lombok.Data;
 import java.time.Instant;
 import java.util.Map;
 
-@Data
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class NotificationEvent {
-
-    private String eventSource;
-    private String eventType;
-    private String customerId;
-    private String accountId;
-    private String channel;
-    private Map<String, Object> data; // e.g. amount, mode, maskedAccount, etc.
-    @JsonFormat(shape = JsonFormat.Shape.STRING)
-    private Instant eventTime;
+public record NotificationEvent(
+        String eventSource,
+        String eventType,
+        String customerId,
+        String accountId,
+        String channel,
+        Map<String, Object> data,
+        @JsonFormat(shape = JsonFormat.Shape.STRING) Instant eventTime) {
 }
-

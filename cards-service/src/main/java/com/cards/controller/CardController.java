@@ -80,10 +80,10 @@ public class CardController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> updateStatus(
             @PathVariable Long id, @RequestBody CardStatusUpdateRequest req) {
-        log.info("POST /cards/{}/status with status: {}", id, req.getStatus());
-        cardService.updateStatus(id, req.getStatus().name());
-        log.info("Card status updated to {} for cardId: {}", req.getStatus(), id);
-        return ResponseEntity.ok("Card status updated to " + req.getStatus());
+        log.info("POST /cards/{}/status with status: {}", id, req.status());
+        cardService.updateStatus(id, req.status().name());
+        log.info("Card status updated to {} for cardId: {}", req.status(), id);
+        return ResponseEntity.ok("Card status updated to " + req.status());
     }
 
     @PostMapping("/{id}/activate")
@@ -91,7 +91,7 @@ public class CardController {
     public ResponseEntity<String> activateCard(
             @PathVariable Long id, @RequestBody CardActivateRequest request) {
         log.info("POST /cards/{}/activate", id);
-        cardService.activateCard(id, request.getPin());
+        cardService.activateCard(id, request.pin());
         log.info("Card with id: {} activated successfully", id);
         return ResponseEntity.ok("Card activated successfully");
     }
@@ -101,7 +101,7 @@ public class CardController {
     public ResponseEntity<String> resetPin(
             @PathVariable Long id, @RequestBody CardPinResetRequest request) {
         log.info("POST /cards/{}/reset-pin", id);
-        cardService.resetPin(id, request.getOldPin(), request.getNewPin());
+        cardService.resetPin(id, request.oldPin(), request.newPin());
         log.info("PIN for cardId: {} reset successfully", id);
         return ResponseEntity.ok("PIN reset successfully");
     }
@@ -124,19 +124,18 @@ public class CardController {
         newCard.setStatus(CardStatus.ACTIVE);
 
         Card reissuedCard = cardService.createCard(
-                new com.cards.dto.CardRequest() {{
-                    setAccountId(oldCard.getAccountId());
-                    setCustomerId(oldCard.getCustomerId());
-                    setCardType(oldCard.getCardType());
-                    setNetwork(oldCard.getNetwork());
-                    setExpiryDate(oldCard.getExpiryDate().plusYears(3));
-                    setCvv("999");
-                    setPinHash(oldCard.getPinHash());
-                }}
-        );
+                new com.cards.dto.CardRequest(
+                        oldCard.getAccountId(),
+                        oldCard.getCustomerId(),
+                        oldCard.getCardType(),
+                        oldCard.getNetwork(),
+                        oldCard.getExpiryDate().plusYears(3),
+                        "999",
+                        oldCard.getPinHash(),
+                        null,
+                        null));
         log.info("Card with id: {} reissued. New cardId: {}", id, reissuedCard.getCardId());
         return ResponseEntity.ok(reissuedCard);
     }
-
 
 }

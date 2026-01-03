@@ -18,7 +18,7 @@ public class KafkaConsumerConfig {
     @Bean
     public ConcurrentKafkaListenerContainerFactory<String, String> kafkaListenerContainerFactory() {
         Map<String, Object> props = new HashMap<>();
-        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:29092"); // <-- Correct external port
+        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:29093"); // <-- Correct external port
         props.put(ConsumerConfig.GROUP_ID_CONFIG, "notification-service-group");
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);

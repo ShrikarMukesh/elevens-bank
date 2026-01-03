@@ -4,10 +4,5 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 
-@Getter
-@Setter
-@RequiredArgsConstructor
-public class CardPinResetRequest {
-    private String oldPin;
-    private String newPin;
+public record CardPinResetRequest(String oldPin, String newPin) {
 }

@@ -5,9 +5,5 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 
-@Getter
-@Setter
-@RequiredArgsConstructor
-public class CardStatusUpdateRequest {
-    private CardStatus status;
+public record CardStatusUpdateRequest(CardStatus status) {
 }

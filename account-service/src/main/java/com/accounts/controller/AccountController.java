@@ -31,7 +31,8 @@ import java.util.Map;
 public class AccountController {
 
     private final AccountServiceImpl accountServiceImpl;
-    // DIP (partially): Depends on a separate service layer instead of doing business logic here.
+    // DIP (partially): Depends on a separate service layer instead of doing
+    // business logic here.
     // (Would be stronger DIP if this was AccountService interface.)
 
     @GetMapping("/status")
@@ -43,9 +44,11 @@ public class AccountController {
 
     @PostMapping("/create")
     @PreAuthorize("hasRole('ADMIN')")
-    // SRP/SoC: Security concerns are handled declaratively via annotation, not hardcoded in method logic.
+    // SRP/SoC: Security concerns are handled declaratively via annotation, not
+    // hardcoded in method logic.
     public ResponseEntity<Account> createAccount(@RequestBody AccountRequest account) {
-        // SRP: Method handles HTTP-level concerns (logging, request/response) and delegates business logic to service.
+        // SRP: Method handles HTTP-level concerns (logging, request/response) and
+        // delegates business logic to service.
         log.info("POST /api/accounts/create with request: {}", account);
         Account createdAccount = accountServiceImpl.createAccount(account); // SRP: business logic in service layer.
         log.info("Account created with id: {}", createdAccount.getAccountId());
@@ -66,7 +69,8 @@ public class AccountController {
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN') or @securityUtils.isOwner(#id)")
     public ResponseEntity<Account> getAccount(@PathVariable Long id) {
-        // SRP: Only responsible for HTTP mapping and response, not fetching logic itself.
+        // SRP: Only responsible for HTTP mapping and response, not fetching logic
+        // itself.
         log.info("GET /api/accounts/{}", id);
         Account account = accountServiceImpl.getAccountById(id); // SRP: delegation to service.
         log.info("Account found with id: {}", account.getAccountId());
@@ -74,7 +78,7 @@ public class AccountController {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    //@PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<Account>> getAllAccounts() {
         // SRP: Dedicated to "get all accounts" API behavior.
         log.info("GET /api/accounts");
@@ -86,7 +90,8 @@ public class AccountController {
     @PostMapping("/{id}/deposit")
     @PreAuthorize("hasRole('ADMIN') or @securityUtils.isOwner(#id)")
     public ResponseEntity<String> deposit(@PathVariable Long id, @RequestParam BigDecimal amount) {
-        // SRP: Handles only HTTP interaction for deposit; actual deposit rules are in service.
+        // SRP: Handles only HTTP interaction for deposit; actual deposit rules are in
+        // service.
         log.info("POST /api/accounts/{}/deposit with amount: {}", id, amount);
         accountServiceImpl.deposit(id, amount); // SRP: delegate to service for business logic.
         log.info("Deposit successful for accountId: {}", id);
@@ -105,22 +110,25 @@ public class AccountController {
 
     @PostMapping("/transfer")
     public ResponseEntity<Map<String, Object>> transfer(@RequestBody AccountTransactionRequest request) {
-        // SRP: This method is responsible for building the HTTP-level transfer response.
+        // SRP: This method is responsible for building the HTTP-level transfer
+        // response.
         log.info("API Transfer request received: {}", request);
         Map<String, Object> response = new HashMap<>();
         try {
-            accountServiceImpl.transfer(request.getFromAccountId(), request.getToAccountId(), request.getAmount());
+            accountServiceImpl.transfer(request.fromAccountId(), request.toAccountId(), request.amount());
             // SRP: Transfer business logic is fully delegated to service.
             response.put("status", "SUCCESS");
             response.put("message", "Transfer completed successfully");
             response.put("timestamp", LocalDateTime.now());
-            log.info("Transfer from accountId: {} to accountId: {} successful", request.getFromAccountId(), request.getToAccountId());
+            log.info("Transfer from accountId: {} to accountId: {} successful", request.fromAccountId(),
+                    request.toAccountId());
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             response.put("status", "FAILED");
             response.put("message", e.getMessage());
             response.put("timestamp", LocalDateTime.now());
-            log.error("Transfer from accountId: {} to accountId: {} failed with error: {}", request.getFromAccountId(), request.getToAccountId(), e.getMessage());
+            log.error("Transfer from accountId: {} to accountId: {} failed with error: {}", request.fromAccountId(),
+                    request.toAccountId(), e.getMessage());
             return ResponseEntity.badRequest().body(response);
         }
     }

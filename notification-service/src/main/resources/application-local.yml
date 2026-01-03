@@ -21,7 +21,7 @@ spring:
       database: elevens-bank
 
   kafka:
-    bootstrap-servers: localhost:29092
+    bootstrap-servers: localhost:29093
     consumer:
       group-id: notification-service-group
       auto-offset-reset: earliest

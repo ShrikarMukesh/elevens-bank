@@ -6,25 +6,20 @@ import lombok.*;
 
 import java.math.BigDecimal;
 
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-public class AccountRequest {
+public record AccountRequest(
+        @NotNull(message = "Customer ID is required") String customerId,
 
-    @NotNull(message = "Customer ID is required")
-    private String customerId;
+        @NotBlank(message = "Account number is required") @Size(min = 10, max = 20, message = "Account number must be between 10 and 20 characters") String accountNumber,
 
-    @NotBlank(message = "Account number is required")
-    @Size(min = 10, max = 20, message = "Account number must be between 10 and 20 characters")
-    private String accountNumber;
+        @NotNull(message = "Account type is required") AccountType accountType,
 
-    @NotNull(message = "Account type is required")
-    private AccountType accountType;  // Use Enum directly
+        @DecimalMin(value = "0.0", inclusive = true, message = "Balance cannot be negative") BigDecimal balance,
 
-    @DecimalMin(value = "0.0", inclusive = true, message = "Balance cannot be negative")
-    private BigDecimal balance = BigDecimal.ZERO; // default to 0
-
-    @Pattern(regexp = "^[A-Z]{3}$", message = "Currency must be a 3-letter uppercase code")
-    private String currency = "INR"; // default to INR
+        @Pattern(regexp = "^[A-Z]{3}$", message = "Currency must be a 3-letter uppercase code") String currency) {
+    public AccountRequest {
+        if (balance == null)
+            balance = BigDecimal.ZERO;
+        if (currency == null)
+            currency = "INR";
+    }
 }

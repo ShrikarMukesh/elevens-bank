@@ -6,12 +6,9 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-public class LoanRequest {
-    private String customerId;
-    private BigDecimal amount;
-    private BigDecimal interestRate;
-    private Integer tenureMonths;
+public record LoanRequest(
+        String customerId,
+        BigDecimal amount,
+        BigDecimal interestRate,
+        Integer tenureMonths) {
 }

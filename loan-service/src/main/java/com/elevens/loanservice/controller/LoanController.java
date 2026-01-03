@@ -19,10 +19,10 @@ public class LoanController {
     @PostMapping("/apply")
     public ResponseEntity<Loan> applyLoan(@RequestBody com.elevens.loanservice.dto.LoanRequest request) {
         return ResponseEntity.ok(loanService.applyLoan(
-                request.getCustomerId(),
-                request.getAmount(),
-                request.getInterestRate(),
-                request.getTenureMonths()));
+                request.customerId(),
+                request.amount(),
+                request.interestRate(),
+                request.tenureMonths()));
     }
 
     @GetMapping("/my-loans")

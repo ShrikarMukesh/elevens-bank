@@ -32,22 +32,22 @@ public class CardServiceImpl implements CardService {
 
     @Override
     public Card createCard(CardRequest request) {
-        log.info("Creating a new card for customerId: {}", request.getCustomerId());
+        log.info("Creating a new card for customerId: {}", request.customerId());
         Card card = new Card();
 
-        card.setAccountId(request.getAccountId());
-        card.setCustomerId(request.getCustomerId());
-        card.setCardNumber(generateCardNumber(request.getNetwork()));
-        card.setCardType(request.getCardType());
-        card.setNetwork(request.getNetwork());
-        card.setExpiryDate(request.getExpiryDate());
-        card.setCvv(request.getCvv());
+        card.setAccountId(request.accountId());
+        card.setCustomerId(request.customerId());
+        card.setCardNumber(generateCardNumber(request.network()));
+        card.setCardType(request.cardType());
+        card.setNetwork(request.network());
+        card.setExpiryDate(request.expiryDate());
+        card.setCvv(request.cvv());
 
         // ✅ Secure PIN Hashing
-        card.setPinHash(passwordEncoder.encode(request.getPinHash()));
+        card.setPinHash(passwordEncoder.encode(request.pinHash()));
 
-        card.setDailyLimit(request.getDailyLimit());
-        card.setMonthlyLimit(request.getMonthlyLimit());
+        card.setDailyLimit(request.dailyLimit());
+        card.setMonthlyLimit(request.monthlyLimit());
         card.setStatus(CardStatus.ACTIVE);
         card.setCreatedAt(LocalDate.from(LocalDateTime.now()));
 
@@ -63,11 +63,11 @@ public class CardServiceImpl implements CardService {
         String binPrefix;
 
         switch (network) {
-            case VISA -> binPrefix = "4";         // VISA cards start with 4
-            case MASTERCARD -> binPrefix = "5";   // MasterCard cards start with 5
-            case RUPAY -> binPrefix = "6";        // RuPay cards start with 6
-            case AMEX -> binPrefix = "3";         // AMEX cards start with 3
-            default -> binPrefix = "9";           // fallback (for test cards)
+            case VISA -> binPrefix = "4"; // VISA cards start with 4
+            case MASTERCARD -> binPrefix = "5"; // MasterCard cards start with 5
+            case RUPAY -> binPrefix = "6"; // RuPay cards start with 6
+            case AMEX -> binPrefix = "3"; // AMEX cards start with 3
+            default -> binPrefix = "9"; // fallback (for test cards)
         }
 
         StringBuilder number = new StringBuilder(binPrefix);
@@ -85,7 +85,8 @@ public class CardServiceImpl implements CardService {
             int n = Integer.parseInt(number.substring(i, i + 1));
             if (alternate) {
                 n *= 2;
-                if (n > 9) n = (n % 10) + 1;
+                if (n > 9)
+                    n = (n % 10) + 1;
             }
             sum += n;
             alternate = !alternate;
@@ -95,7 +96,6 @@ public class CardServiceImpl implements CardService {
 
         return number.toString();
     }
-
 
     @Override
     public Card getCardById(Long id) {
@@ -139,7 +139,6 @@ public class CardServiceImpl implements CardService {
         cardRepository.save(card);
         log.info("Successfully updated status for card with id: {} to {}", id, status);
     }
-
 
     @Override
     public void activateCard(Long id, String pin) {
@@ -186,16 +185,16 @@ public class CardServiceImpl implements CardService {
         blockCard(oldCard.getCardId());
 
         // Create a new card request from the old card's details
-        CardRequest newCardRequest = new CardRequest();
-        newCardRequest.setCustomerId(oldCard.getCustomerId());
-        newCardRequest.setAccountId(oldCard.getAccountId());
-        newCardRequest.setCardType(oldCard.getCardType());
-        newCardRequest.setNetwork(oldCard.getNetwork());
-        newCardRequest.setExpiryDate(LocalDate.now().plusYears(3));
-        newCardRequest.setCvv(String.valueOf(new Random().nextInt(900) + 100));
-        newCardRequest.setPinHash(oldCard.getPinHash()); // Note: Re-using pin hash, user doesn't need to set a new one.
-        newCardRequest.setDailyLimit(oldCard.getDailyLimit());
-        newCardRequest.setMonthlyLimit(oldCard.getMonthlyLimit());
+        CardRequest newCardRequest = new CardRequest(
+                oldCard.getAccountId(),
+                oldCard.getCustomerId(),
+                oldCard.getCardType(),
+                oldCard.getNetwork(),
+                LocalDate.now().plusYears(3),
+                String.valueOf(new Random().nextInt(900) + 100),
+                oldCard.getPinHash(), // Note: Re-using pin hash, user doesn't need to set a new one.
+                oldCard.getDailyLimit(),
+                oldCard.getMonthlyLimit());
 
         log.info("Creating new card to replace card id: {}", id);
         return createCard(newCardRequest);

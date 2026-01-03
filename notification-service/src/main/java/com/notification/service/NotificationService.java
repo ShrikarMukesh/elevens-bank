@@ -120,28 +120,28 @@ public class NotificationService {
     }
 
     public Mono<Void> processNotification(NotificationEvent event) {
-        log.info("Processing notification event for eventType: {}", event.getEventType());
-        return templateRepository.findByEventTypeAndChannelAndIsActiveTrue(event.getEventType(), event.getChannel())
+        log.info("Processing notification event for eventType: {}", event.eventType());
+        return templateRepository.findByEventTypeAndChannelAndIsActiveTrue(event.eventType(), event.channel())
                 .next() // Get the first one or empty
                 .switchIfEmpty(Mono.defer(() -> {
-                    log.warn("⚠️ No template found for eventType: {}. Using default template.", event.getEventType());
+                    log.warn("⚠️ No template found for eventType: {}. Using default template.", event.eventType());
                     return Mono.just(NotificationTemplate.builder()
                             .subject("Notification from Your Bank")
-                            .message("Dear Customer, an event of type " + event.getEventType() + " occurred.")
+                            .message("Dear Customer, an event of type " + event.eventType() + " occurred.")
                             .build());
                 }))
                 .flatMap(template -> {
-                    String subject = templateEngineService.renderTemplate(template.getSubject(), event.getData());
-                    String message = templateEngineService.renderTemplate(template.getMessage(), event.getData());
+                    String subject = templateEngineService.renderTemplate(template.getSubject(), event.data());
+                    String message = templateEngineService.renderTemplate(template.getMessage(), event.data());
 
                     Notification notification = Notification.builder()
                             .notificationId("NTF" + UUID.randomUUID().toString().substring(0, 8).toUpperCase())
-                            .eventSource(event.getEventSource())
-                            .eventType(event.getEventType())
-                            .customerId(event.getCustomerId())
-                            .accountId(event.getAccountId())
-                            .type(event.getChannel())
-                            .channel(event.getChannel())
+                            .eventSource(event.eventSource())
+                            .eventType(event.eventType())
+                            .customerId(event.customerId())
+                            .accountId(event.accountId())
+                            .type(event.channel())
+                            .channel(event.channel())
                             .priority("HIGH")
                             .subject(subject)
                             .message(message)
@@ -156,22 +156,22 @@ public class NotificationService {
                             .doOnNext(saved -> log.info("Notification record created with ID: {}",
                                     saved.getNotificationId()))
                             .flatMap(saved -> Mono.fromRunnable(() -> {
-                                if ("EMAIL".equalsIgnoreCase(event.getChannel())) {
-                                    log.info("Sending EMAIL to customerId: {}", event.getCustomerId());
+                                if ("EMAIL".equalsIgnoreCase(event.channel())) {
+                                    log.info("Sending EMAIL to customerId: {}", event.customerId());
                                     // Assuming smsService/emailService are blocking, we might want to offload them
                                     // if they take time
                                     // For now, keeping it simple as per migration request
-                                    smsService.sendSms(event.getCustomerId(), message);
-                                } else if ("SMS".equalsIgnoreCase(event.getChannel())) {
-                                    log.info("Sending SMS to customerId: {}", event.getCustomerId());
-                                    smsService.sendSms(event.getCustomerId(), message);
+                                    smsService.sendSms(event.customerId(), message);
+                                } else if ("SMS".equalsIgnoreCase(event.channel())) {
+                                    log.info("Sending SMS to customerId: {}", event.customerId());
+                                    smsService.sendSms(event.customerId(), message);
                                 } else {
-                                    log.warn("⚠️ Unknown channel: {} — skipping send.", event.getChannel());
+                                    log.warn("⚠️ Unknown channel: {} — skipping send.", event.channel());
                                 }
                             }));
                 })
                 .doOnSuccess(v -> log.info("✅ Notification processed and stored successfully for eventType: {}",
-                        event.getEventType()))
+                        event.eventType()))
                 .then();
     }
 }

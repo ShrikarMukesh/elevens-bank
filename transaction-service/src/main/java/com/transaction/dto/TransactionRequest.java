@@ -8,23 +8,11 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class TransactionRequest {
-    @NotNull
-    private Long accountId;
-
-    private Long targetAccountId; // For transfers
-
-    @NotNull
-    private BigDecimal amount;
-
-    @NotNull
-    private TransactionType transactionType;
-
-    @NotNull
-    private Integer modeId;
-
-    private String description;
+public record TransactionRequest(
+        @NotNull Long accountId,
+        Long targetAccountId,
+        @NotNull BigDecimal amount,
+        @NotNull TransactionType transactionType,
+        @NotNull Integer modeId,
+        String description) {
 }

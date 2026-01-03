@@ -44,11 +44,12 @@ class AccountServiceImplTest {
                 .status(AccountStatus.ACTIVE)
                 .build();
 
-        accountRequest = new AccountRequest();
-        accountRequest.setCustomerId("CUST123");
-        accountRequest.setAccountNumber("1234567890");
-        accountRequest.setAccountType(AccountType.SAVINGS);
-        accountRequest.setBalance(BigDecimal.valueOf(1000));
+        accountRequest = new AccountRequest(
+                "CUST123",
+                "1234567890",
+                AccountType.SAVINGS,
+                BigDecimal.valueOf(1000),
+                "INR");
     }
 
     @Test
@@ -116,10 +117,8 @@ class AccountServiceImplTest {
     void testWithdraw_InsufficientFunds() {
         when(accountRepository.findById(1L)).thenReturn(Optional.of(account));
 
-        assertThrows(RuntimeException.class, () -> 
-            accountService.withdraw(1L, BigDecimal.valueOf(2000))
-        );
-        
+        assertThrows(RuntimeException.class, () -> accountService.withdraw(1L, BigDecimal.valueOf(2000)));
+
         // Verify save was NEVER called
         verify(accountRepository, never()).save(any(Account.class));
     }
