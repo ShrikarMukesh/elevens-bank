@@ -19,7 +19,7 @@ public class UserEventConsumer {
 
     private final CustomerRepository customerRepository;
 
-    @KafkaListener(topics = "bank.user.event.v1", groupId = "customer-service-group", containerFactory = "kafkaListenerContainerFactory")
+    @KafkaListener(topics = "${spring.kafka.topic.user-created}", groupId = "${spring.kafka.consumer.group-id}", containerFactory = "kafkaListenerContainerFactory")
     public void consumeUserCreated(UserCreatedEvent event, Acknowledgment ack) {
         try {
             log.info("📩 Received UserCreatedEvent: {}", event);

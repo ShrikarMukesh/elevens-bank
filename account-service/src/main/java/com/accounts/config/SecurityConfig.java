@@ -1,5 +1,6 @@
 package com.accounts.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,6 +17,9 @@ import java.util.List;
 @EnableAutoConfiguration(exclude = {UserDetailsServiceAutoConfiguration.class})
 // SRP: Excluding default user-details config to keep this class focused on custom security setup.
 public class SecurityConfig {
+
+    @Value("${cors.allowed-origins}")
+    private String allowedOrigins;
 
     @Bean
     // DIP: Higher-level components depend on this SecurityFilterChain abstraction, not its implementation.
@@ -43,7 +47,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         // SRP: Dedicated method solely responsible for CORS configuration (no mixing with security rules).
         CorsConfiguration corsConfig = new CorsConfiguration();
-        corsConfig.setAllowedOrigins(List.of("http://localhost:3000"));
+        corsConfig.setAllowedOrigins(List.of(allowedOrigins.split(",")));
         corsConfig.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         corsConfig.setAllowedHeaders(List.of("*"));
         corsConfig.setAllowCredentials(true);

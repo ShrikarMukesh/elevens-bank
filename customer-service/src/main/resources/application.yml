@@ -67,3 +67,6 @@ logging:
     root: INFO
     org.springframework.kafka: INFO
     com.customers: DEBUG
+
+cors:
+  allowed-origins: http://localhost:3000

@@ -2,6 +2,7 @@ package com.auth.config;
 
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.core.*;
@@ -13,8 +14,11 @@ import java.util.Map;
 @Configuration
 public class KafkaProducerConfig {
 
-    @org.springframework.beans.factory.annotation.Value("${spring.kafka.bootstrap-servers}")
+    @Value("${spring.kafka.bootstrap-servers}")
     private String bootstrapServers;
+
+    @Value("${spring.kafka.template.default-topic}")
+    private String defaultTopic;
 
     @Bean
     public ProducerFactory<String, Object> producerFactory() {
@@ -29,7 +33,7 @@ public class KafkaProducerConfig {
     @Bean
     public KafkaTemplate<String, Object> kafkaTemplate() {
         KafkaTemplate<String, Object> template = new KafkaTemplate<>(producerFactory());
-        template.setDefaultTopic("bank.user.event.v1");
+        template.setDefaultTopic(defaultTopic);
         return template;
     }
 }

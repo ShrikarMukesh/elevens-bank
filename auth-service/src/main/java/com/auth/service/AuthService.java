@@ -10,6 +10,7 @@ import com.auth.repository.UserRepository;
 import com.auth.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -30,6 +31,9 @@ public class AuthService implements UserDetailsService {
     private final PasswordEncoder passwordEncoder;
 
     private final EventPublisherService eventPublisherService;
+
+    @Value("${spring.kafka.template.default-topic}")
+    private String userEventsTopic;
 
     // ----------------- REGISTER -----------------
     /**
@@ -77,7 +81,7 @@ public class AuthService implements UserDetailsService {
                 .build();
 
         // Publish asynchronously via centralized service
-        eventPublisherService.publishEvent("bank.user.event.v1", String.valueOf(event.getUserId()), event);
+        eventPublisherService.publishEvent(userEventsTopic, String.valueOf(event.getUserId()), event);
         return savedUser;
     }
 
