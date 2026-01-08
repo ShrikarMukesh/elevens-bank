@@ -1,7 +1,7 @@
 package com.cards.service;
 
-import com.cards.dto.CardRequest;
-import com.cards.entity.Card;
+import com.cards.model.Card;
+import com.cards.model.CardRequest;
 
 import java.util.List;
 

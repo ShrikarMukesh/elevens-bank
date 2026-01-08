@@ -20,7 +20,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.List;
 
 @Configuration
-@EnableAutoConfiguration(exclude = {UserDetailsServiceAutoConfiguration.class})
+@EnableAutoConfiguration(exclude = { UserDetailsServiceAutoConfiguration.class })
 @EnableMethodSecurity
 public class SecurityConfig {
 
@@ -41,9 +41,9 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/cards/status").permitAll()
-                        .anyRequest().authenticated()
-                )
+                        .requestMatchers("/cards/status", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html")
+                        .permitAll()
+                        .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterAfter(requestLoggingFilter, JwtAuthenticationFilter.class); // 👈 Add logger after JWT filter
 

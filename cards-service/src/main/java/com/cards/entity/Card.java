@@ -1,6 +1,5 @@
 package com.cards.entity;
 
-
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -42,6 +41,4 @@ public class Card {
 
     private LocalDate createdAt = LocalDate.now();
 
-    // Getters & Setters
-    // ...
 }

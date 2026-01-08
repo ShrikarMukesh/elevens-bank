@@ -1,0 +1,342 @@
+openapi: 3.0.3
+info:
+  title: Cards Service API
+  description: API for managing bank cards (Debit, Credit, Prepaid)
+  version: 1.0.0
+security:
+  - bearerAuth: []
+servers:
+  - url: http://localhost:2001
+    description: Local Server
+paths:
+  /cards/status:
+    get:
+      tags:
+        - Cards
+      summary: Check service status
+      operationId: getStatus
+      responses:
+        "200":
+          description: Service is running
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Card Service Running"
+
+  /cards/create:
+    post:
+      tags:
+        - Cards
+      summary: Create a new card
+      operationId: createCard
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CardRequest"
+      responses:
+        "200":
+          description: Card created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Card"
+
+  /cards/{id}:
+    get:
+      tags:
+        - Cards
+      summary: Get card by ID
+      operationId: getCard
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: Card found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Card"
+
+  /cards/customer/{customerId}:
+    get:
+      tags:
+        - Cards
+      summary: Get cards by customer ID
+      operationId: getCardsByCustomer
+      parameters:
+        - name: customerId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: List of cards found
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Card"
+
+  /cards:
+    get:
+      tags:
+        - Cards
+      summary: Get all cards
+      operationId: getAllCards
+      responses:
+        "200":
+          description: List of all cards
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Card"
+
+  /cards/{id}/block:
+    post:
+      tags:
+        - Cards
+      summary: Block a card
+      operationId: blockCard
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: Card blocked successfully
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Card blocked successfully"
+
+  /cards/{id}/status:
+    post:
+      tags:
+        - Cards
+      summary: Update card status
+      operationId: updateStatus
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CardStatusUpdateRequest"
+      responses:
+        "200":
+          description: Card status updated
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /cards/{id}/activate:
+    post:
+      tags:
+        - Cards
+      summary: Activate a card
+      operationId: activateCard
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CardActivateRequest"
+      responses:
+        "200":
+          description: Card activated successfully
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Card activated successfully"
+
+  /cards/{id}/reset-pin:
+    post:
+      tags:
+        - Cards
+      summary: Reset card PIN
+      operationId: resetPin
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CardPinResetRequest"
+      responses:
+        "200":
+          description: PIN reset successfully
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "PIN reset successfully"
+
+  /cards/{id}/reissue:
+    post:
+      tags:
+        - Cards
+      summary: Reissue a card
+      operationId: reissueCard
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: Card reissued successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Card"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Card:
+      type: object
+      properties:
+        cardId:
+          type: integer
+          format: int64
+        accountId:
+          type: integer
+          format: int64
+        customerId:
+          type: integer
+          format: int64
+        cardNumber:
+          type: string
+        cardType:
+          $ref: "#/components/schemas/CardType"
+        network:
+          $ref: "#/components/schemas/Network"
+        expiryDate:
+          type: string
+          format: date
+        cvv:
+          type: string
+        pinHash:
+          type: string
+        dailyLimit:
+          type: number
+        monthlyLimit:
+          type: number
+        status:
+          $ref: "#/components/schemas/CardStatus"
+        createdAt:
+          type: string
+          format: date
+
+    CardRequest:
+      type: object
+      properties:
+        accountId:
+          type: integer
+          format: int64
+        customerId:
+          type: integer
+          format: int64
+        cardType:
+          $ref: "#/components/schemas/CardType"
+        network:
+          $ref: "#/components/schemas/Network"
+        expiryDate:
+          type: string
+          format: date
+        cvv:
+          type: string
+        pinHash:
+          type: string
+        dailyLimit:
+          type: number
+        monthlyLimit:
+          type: number
+
+    CardActivateRequest:
+      type: object
+      properties:
+        pin:
+          type: string
+
+    CardPinResetRequest:
+      type: object
+      properties:
+        oldPin:
+          type: string
+        newPin:
+          type: string
+
+    CardStatusUpdateRequest:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/CardStatus"
+
+    CardType:
+      type: string
+      enum:
+        - DEBIT
+        - CREDIT
+        - PREPAID
+
+    Network:
+      type: string
+      enum:
+        - VISA
+        - MASTERCARD
+        - RUPAY
+        - AMEX
+
+    CardStatus:
+      type: string
+      enum:
+        - ACTIVE
+        - BLOCKED
+        - EXPIRED
+        - LOST
+        - STOLEN

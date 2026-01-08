@@ -12,6 +12,10 @@ The `cards-service` manages Debit and Credit cards issued to customers. It handl
 - **Database**: MySQL
 - **Framework**: Spring Boot
 
+http://localhost:2001/swagger-ui.html 
+
+http://localhost:2001/v3/api-docs
+
 ## API Flow
 ```mermaid
 graph LR
