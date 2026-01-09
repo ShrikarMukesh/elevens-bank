@@ -1,0 +1,266 @@
+openapi: 3.0.3
+info:
+  title: Customer Service API
+  description: API for managing customers
+  version: 1.0.0
+security:
+  - bearerAuth: []
+servers:
+  - url: http://localhost:6001
+    description: Local Server
+paths:
+  /api/customers:
+    post:
+      tags:
+        - Customers
+      summary: Create a new customer
+      operationId: createCustomer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CustomerDto"
+      responses:
+        "200":
+          description: Customer created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerDto"
+
+  /api/customers/{customerId}:
+    get:
+      tags:
+        - Customers
+      summary: Get customer by ID
+      operationId: getCustomerById
+      parameters:
+        - name: customerId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Customer found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerDto"
+        "404":
+          description: Customer not found
+    put:
+      tags:
+        - Customers
+      summary: Update customer
+      operationId: updateCustomer
+      parameters:
+        - name: customerId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CustomerDto"
+      responses:
+        "200":
+          description: Customer updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerDto"
+    delete:
+      tags:
+        - Customers
+      summary: Delete customer
+      operationId: deleteCustomer
+      parameters:
+        - name: customerId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Customer deleted successfully
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /api/customers/email/{email}:
+    get:
+      tags:
+        - Customers
+      summary: Get customer by email
+      operationId: getCustomerByEmail
+      parameters:
+        - name: email
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Customer found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerDto"
+        "404":
+          description: Customer not found
+
+  /api/customers/status/{status}:
+    get:
+      tags:
+        - Customers
+      summary: Get customers by status
+      operationId: getCustomersByStatus
+      parameters:
+        - name: status
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of customers found
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CustomerDto"
+
+  /api/customers/{customerId}/kyc:
+    patch:
+      tags:
+        - Customers
+      summary: Update KYC status
+      operationId: updateKycStatus
+      parameters:
+        - name: customerId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: verified
+          in: query
+          required: true
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: KYC updated successfully
+          content:
+            text/plain:
+              schema:
+                type: string
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    CustomerDto:
+      type: object
+      properties:
+        id:
+          type: string
+        customerId:
+          type: string
+        userId:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        dob:
+          type: string
+          format: date
+        gender:
+          type: string
+        email:
+          type: string
+        phoneNumbers:
+          type: array
+          items:
+            $ref: "#/components/schemas/PhoneNumberDto"
+        addresses:
+          type: array
+          items:
+            $ref: "#/components/schemas/AddressDto"
+        kyc:
+          $ref: "#/components/schemas/KycDetailsDto"
+        preferences:
+          $ref: "#/components/schemas/PreferencesDto"
+        status:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    PhoneNumberDto:
+      type: object
+      properties:
+        type:
+          type: string
+        number:
+          type: string
+        isPrimary:
+          type: boolean
+
+    AddressDto:
+      type: object
+      properties:
+        type:
+          type: string
+        line1:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        pincode:
+          type: string
+        country:
+          type: string
+        isPrimary:
+          type: boolean
+
+    KycDetailsDto:
+      type: object
+      properties:
+        aadhaar:
+          type: string
+        pan:
+          type: string
+        passport:
+          type: string
+        verified:
+          type: boolean
+        verifiedAt:
+          type: string
+          format: date-time
+
+    PreferencesDto:
+      type: object
+      properties:
+        language:
+          type: string
+        notifications:
+          type: boolean
+        channels:
+          type: array
+          items:
+            type: string
