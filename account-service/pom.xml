@@ -99,8 +99,6 @@
             <artifactId>spring-kafka</artifactId>
         </dependency>
 
-    </dependencies>
-
         <!-- Micrometer Tracing with OpenTelemetry -->
         <dependency>
             <groupId>io.micrometer</groupId>
@@ -111,5 +109,6 @@
             <artifactId>opentelemetry-exporter-zipkin</artifactId>
         </dependency>
 
+    </dependencies>
 
 </project>

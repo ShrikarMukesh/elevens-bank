@@ -7,8 +7,7 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
-@SpringBootApplication(exclude = { UserDetailsServiceAutoConfiguration.class }
-)
+@SpringBootApplication(exclude = { UserDetailsServiceAutoConfiguration.class })
 @EnableTransactionManagement
 @EnableMethodSecurity
 @EnableCaching

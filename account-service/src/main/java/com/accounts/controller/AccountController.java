@@ -3,7 +3,7 @@ package com.accounts.controller;
 import com.accounts.dto.AccountRequest;
 import com.accounts.dto.AccountTransactionRequest;
 import com.accounts.entity.Account;
-import com.accounts.service.impl.AccountServiceImpl;
+import com.accounts.service.AccountService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -30,7 +30,7 @@ import java.util.Map;
 @RequiredArgsConstructor // DIP/IoC: Dependencies are injected via constructor (generated), controller doesn't create them.
 public class AccountController {
 
-    private final AccountServiceImpl accountServiceImpl;
+    private final AccountService accountService;
     // DIP (partially): Depends on a separate service layer instead of doing
     // business logic here.
     // (Would be stronger DIP if this was AccountService interface.)
@@ -50,7 +50,7 @@ public class AccountController {
         // SRP: Method handles HTTP-level concerns (logging, request/response) and
         // delegates business logic to service.
         log.info("POST /api/accounts/create with request: {}", account);
-        Account createdAccount = accountServiceImpl.createAccount(account); // SRP: business logic in service layer.
+        Account createdAccount = accountService.createAccount(account); // SRP: business logic in service layer.
         log.info("Account created with id: {}", createdAccount.getAccountId());
         return ResponseEntity.ok(createdAccount); // OCP-friendly: response building is localized here.
     }
@@ -61,7 +61,7 @@ public class AccountController {
     public ResponseEntity<List<Account>> getAccountsByCustomer(@PathVariable String customerId) {
         // SRP: Method only coordinates request → service → response flow.
         log.info("Fetching accounts for customerId={}", customerId);
-        List<Account> accounts = accountServiceImpl.getAccountsByCustomerId(customerId); // SRP: delegate to service.
+        List<Account> accounts = accountService.getAccountsByCustomerId(customerId); // SRP: delegate to service.
         log.info("Found {} accounts for customerId: {}", accounts.size(), customerId);
         return ResponseEntity.ok(accounts);
     }
@@ -72,17 +72,17 @@ public class AccountController {
         // SRP: Only responsible for HTTP mapping and response, not fetching logic
         // itself.
         log.info("GET /api/accounts/{}", id);
-        Account account = accountServiceImpl.getAccountById(id); // SRP: delegation to service.
+        Account account = accountService.getAccountById(id); // SRP: delegation to service.
         log.info("Account found with id: {}", account.getAccountId());
         return ResponseEntity.ok(account);
     }
 
     @GetMapping
-    //@PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<Account>> getAllAccounts() {
         // SRP: Dedicated to "get all accounts" API behavior.
         log.info("GET /api/accounts");
-        List<Account> accounts = accountServiceImpl.getAllAccounts(); // SRP: business logic in service.
+        List<Account> accounts = accountService.getAllAccounts(); // SRP: business logic in service.
         log.info("Found {} accounts", accounts.size());
         return ResponseEntity.ok(accounts);
     }
@@ -93,7 +93,7 @@ public class AccountController {
         // SRP: Handles only HTTP interaction for deposit; actual deposit rules are in
         // service.
         log.info("POST /api/accounts/{}/deposit with amount: {}", id, amount);
-        accountServiceImpl.deposit(id, amount); // SRP: delegate to service for business logic.
+        accountService.deposit(id, amount); // SRP: delegate to service for business logic.
         log.info("Deposit successful for accountId: {}", id);
         return ResponseEntity.ok("Deposit successful");
     }
@@ -103,7 +103,7 @@ public class AccountController {
     public ResponseEntity<String> withdraw(@PathVariable Long id, @RequestParam BigDecimal amount) {
         // SRP: Only orchestrates the withdraw HTTP API.
         log.info("POST /api/accounts/{}/withdraw with amount: {}", id, amount);
-        accountServiceImpl.withdraw(id, amount); // SRP: actual logic in service.
+        accountService.withdraw(id, amount); // SRP: actual logic in service.
         log.info("Withdrawal successful for accountId: {}", id);
         return ResponseEntity.ok("Withdrawal successful");
     }
@@ -115,7 +115,7 @@ public class AccountController {
         log.info("API Transfer request received: {}", request);
         Map<String, Object> response = new HashMap<>();
         try {
-            accountServiceImpl.transfer(request.fromAccountId(), request.toAccountId(), request.amount());
+            accountService.transfer(request.fromAccountId(), request.toAccountId(), request.amount());
             // SRP: Transfer business logic is fully delegated to service.
             response.put("status", "SUCCESS");
             response.put("message", "Transfer completed successfully");

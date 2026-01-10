@@ -26,6 +26,9 @@ public interface AccountService {
     Account getAccountById(Long accountId);
     // SRP: Contract for retrieving a single account.
 
+    List<Account> getAccountsByCustomerId(String customerId);
+    // SRP: Contract for retrieving accounts by customer ID.
+
     List<Account> getAllAccounts();
     // SRP: Contract for retrieving all accounts.
 

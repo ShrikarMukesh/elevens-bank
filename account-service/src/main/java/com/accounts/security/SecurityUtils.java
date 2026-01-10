@@ -17,11 +17,11 @@ public class SecurityUtils {
 
     public static AuthPrincipal getPrincipal() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !(auth.getPrincipal() instanceof AuthPrincipal p)) {
+        if (auth == null || !(auth.getPrincipal() instanceof AuthPrincipal)) {
             log.debug("No AuthPrincipal found in SecurityContextHolder.");
             return null;
         }
-        return null;
+        return (AuthPrincipal) auth.getPrincipal();
     }
 
     public static boolean isAdmin() {
@@ -48,10 +48,18 @@ public class SecurityUtils {
             return false;
         }
 
-        boolean isOwner = acc.getCustomerId().equals(p.getCustomerId());
+        boolean isOwner = acc.getCustomerId().equals(String.valueOf(p.getCustomerId()));
         log.debug("Account {} owner check result: {}. Account customerId: {}, Principal customerId: {}",
                   accountId, isOwner, acc.getCustomerId(), p.getCustomerId());
         return isOwner;
+    }
+
+    public boolean isCustomerOwner(String customerId) {
+        AuthPrincipal p = getPrincipal();
+        if (p == null || p.getCustomerId() == null) {
+            return false;
+        }
+        return String.valueOf(p.getCustomerId()).equals(customerId);
     }
 
     public static String getPrincipalUsername() {

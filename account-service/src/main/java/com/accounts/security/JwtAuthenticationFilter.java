@@ -46,11 +46,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (jwtUtil.validate(token)) {
                 String username = jwtUtil.extractUsername(token);
                 String role = jwtUtil.extractRole(token);
+                Long customerId = jwtUtil.extractCustomerId(token);
 
                 // LSP: UsernamePasswordAuthenticationToken follows LSP—any subclass of Authentication works in the security context.
+                AuthPrincipal principal = new AuthPrincipal(username, customerId, List.of(role));
                 UsernamePasswordAuthenticationToken auth =
                         new UsernamePasswordAuthenticationToken(
-                                username,
+                                principal,
                                 null,
                                 List.of(new SimpleGrantedAuthority("ROLE_" + role))
                         );

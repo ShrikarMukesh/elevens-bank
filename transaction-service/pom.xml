@@ -70,8 +70,6 @@
             <artifactId>spring-boot-starter-aop</artifactId>
         </dependency>
 
-    </dependencies>
-
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
@@ -86,5 +84,6 @@
             <artifactId>opentelemetry-exporter-zipkin</artifactId>
         </dependency>
 
+    </dependencies>
 
 </project>

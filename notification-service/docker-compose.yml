@@ -49,3 +49,9 @@ services:
       KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
     depends_on:
       - kafka
+
+  zipkin:
+    image: openzipkin/zipkin
+    container_name: zipkin
+    ports:
+      - "9411:9411"
