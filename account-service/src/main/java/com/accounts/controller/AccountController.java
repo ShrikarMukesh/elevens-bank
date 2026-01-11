@@ -24,10 +24,12 @@ import java.util.Map;
 ✅ **D — Dependency Inversion Principle**
  */
 
-@RestController // SRP: This class is responsible only for handling HTTP requests/responses for accounts.
+@RestController // SRP: This class is responsible only for handling HTTP requests/responses for
+                // accounts.
 @RequestMapping("/api/accounts")
 @Slf4j
-@RequiredArgsConstructor // DIP/IoC: Dependencies are injected via constructor (generated), controller doesn't create them.
+@RequiredArgsConstructor // DIP/IoC: Dependencies are injected via constructor (generated), controller
+                         // doesn't create them.
 public class AccountController {
 
     private final AccountService accountService;
@@ -71,8 +73,15 @@ public class AccountController {
     public ResponseEntity<Account> getAccount(@PathVariable Long id) {
         // SRP: Only responsible for HTTP mapping and response, not fetching logic
         // itself.
-        log.info("GET /api/accounts/{}", id);
+        log.trace("Entering getAccount method with id: {}", id); // Detailed flow tracing
+        log.debug("GET /api/accounts/{} - Request received", id); // Debugging info
+
         Account account = accountService.getAccountById(id); // SRP: delegation to service.
+
+        if (log.isDebugEnabled()) {
+            log.debug("Retrieved account: {}", account); // Only construct string if DEBUG is on
+        }
+
         log.info("Account found with id: {}", account.getAccountId());
         return ResponseEntity.ok(account);
     }
