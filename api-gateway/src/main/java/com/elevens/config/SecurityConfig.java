@@ -15,8 +15,6 @@ import org.springframework.security.web.server.SecurityWebFilterChain;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
-import static org.springframework.security.oauth2.jwt.NimbusReactiveJwtDecoder.*;
-
 @Configuration
 @EnableWebFluxSecurity
 public class SecurityConfig {

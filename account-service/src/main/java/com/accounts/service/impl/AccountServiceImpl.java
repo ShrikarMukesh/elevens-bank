@@ -3,10 +3,14 @@ package com.accounts.service.impl;
 import com.accounts.dto.AccountRequest;
 import com.accounts.entity.Account;
 import com.accounts.entity.AccountStatus;
+import com.accounts.exception.InsufficientBalanceException;
+import com.accounts.exception.ResourceNotFoundException;
 import com.accounts.repository.AccountRepository;
 import com.accounts.service.AccountService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -17,18 +21,8 @@ import org.springframework.cache.annotation.Caching;
 
 /**
  * Service Implementation for Account Operations.
- *
- * <h2>Interview Topic: Service Layer Responsibility</h2>
- * <p>
- * <b>Q: What is the role of the Service Layer?</b><br>
- * A: It encapsulates business logic, transaction management, and coordinates
- * between Repositories and other services.
- * It enforces the "Single Responsibility Principle" (SRP) by keeping business
- * rules out of the Controller.
- * </p>
  */
-@Service // SRP: Marks this class as a service in the business layer (business logic
-         // only, no web concerns)
+@Service
 @Slf4j
 public class AccountServiceImpl implements AccountService {
     // DIP: High-level code (controllers) depend on AccountService interface, not
@@ -39,6 +33,10 @@ public class AccountServiceImpl implements AccountService {
     // "god" interface)
 
     private final AccountRepository accountRepository;
+
+    // Constant to avoid duplicated literal "Account not found"
+    private static final String ACCOUNT_NOT_FOUND = "Account not found";
+
     // DIP: Depends on AccountRepository abstraction (Spring Data interface), not
     // low-level DB code
 
@@ -116,7 +114,7 @@ public class AccountServiceImpl implements AccountService {
         log.info("Fetching account for accountId={}", accountId);
         try {
             Account account = accountRepository.findById(accountId)
-                    .orElseThrow(() -> new RuntimeException("Account not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException(ACCOUNT_NOT_FOUND));
             log.info("Account found for accountId={}", accountId);
             return account;
         } catch (Exception e) {
@@ -177,7 +175,7 @@ public class AccountServiceImpl implements AccountService {
 
         try {
             Account account = accountRepository.findById(accountId)
-                    .orElseThrow(() -> new RuntimeException("Account not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException(ACCOUNT_NOT_FOUND));
 
             BigDecimal oldBalance = account.getBalance();
             BigDecimal newBalance = oldBalance.add(amount);
@@ -204,10 +202,10 @@ public class AccountServiceImpl implements AccountService {
         log.info("Withdraw initiated for accountId={} amount={}", accountId, amount);
         try {
             Account account = accountRepository.findById(accountId)
-                    .orElseThrow(() -> new RuntimeException("Account not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException(ACCOUNT_NOT_FOUND));
 
             if (account.getBalance().compareTo(amount) < 0) {
-                throw new RuntimeException("Insufficient funds");
+                throw new InsufficientBalanceException("Insufficient funds");
             }
 
             BigDecimal oldBalance = account.getBalance();
@@ -243,6 +241,7 @@ public class AccountServiceImpl implements AccountService {
      * {@code Long firstLockId = fromAccountId < toAccountId ? fromAccountId : toAccountId;}
      * </p>
      */
+    //@Transactional(isolation = Isolation.DEFAULT, propagation = Propagation.REQUIRES_NEW)
     @Transactional
     // @Caching: Allows multiple cache operations to be applied to a single method.
     // Since a transfer affects two accounts (sender and receiver), we need to evict
@@ -274,15 +273,15 @@ public class AccountServiceImpl implements AccountService {
             Long secondLockId = fromAccountId < toAccountId ? toAccountId : fromAccountId;
 
             Account firstAccount = accountRepository.findByIdForUpdate(firstLockId)
-                    .orElseThrow(() -> new RuntimeException("Account not found: " + firstLockId));
+                    .orElseThrow(() -> new ResourceNotFoundException(ACCOUNT_NOT_FOUND + ": " + firstLockId));
             Account secondAccount = accountRepository.findByIdForUpdate(secondLockId)
-                    .orElseThrow(() -> new RuntimeException("Account not found: " + secondLockId));
+                    .orElseThrow(() -> new ResourceNotFoundException(ACCOUNT_NOT_FOUND + ": " + secondLockId));
 
             Account fromAccount = firstAccount.getAccountId().equals(fromAccountId) ? firstAccount : secondAccount;
             Account toAccount = firstAccount.getAccountId().equals(toAccountId) ? firstAccount : secondAccount;
 
             if (fromAccount.getBalance().compareTo(amount) < 0) {
-                throw new IllegalArgumentException("Insufficient funds");
+                throw new InsufficientBalanceException("Insufficient funds");
             }
 
             BigDecimal fromNewBalance = fromAccount.getBalance().subtract(amount);

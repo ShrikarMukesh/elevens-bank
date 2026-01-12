@@ -3,6 +3,9 @@ package com.auth.service;
 import com.auth.dto.TokenResponse;
 import com.auth.entity.Session;
 import com.auth.entity.User;
+import com.auth.exception.BadRequestException;
+import com.auth.exception.InvalidCredentialsException;
+import com.auth.exception.ResourceNotFoundException;
 import com.auth.kafka.EventPublisherService;
 import com.auth.kafka.UserCreatedEvent;
 import com.auth.repository.SessionRepository;
@@ -60,10 +63,10 @@ public class AuthService implements UserDetailsService {
     public User register(User user) {
         // 1. Basic validation
         if (userRepository.findByUsername(user.getUsername()).isPresent()) {
-            throw new RuntimeException("Username already exists");
+            throw new BadRequestException("Username already exists");
         }
         if (user.getPasswordHash() == null || user.getPasswordHash().isEmpty()) {
-            throw new RuntimeException("Password cannot be empty");
+            throw new BadRequestException("Password cannot be empty");
         }
 
         // 2. Encode password and persist
@@ -110,10 +113,10 @@ public class AuthService implements UserDetailsService {
      */
     public Session login(String username, String password, String ipAddress, String userAgent) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         if (!passwordEncoder.matches(password, user.getPasswordHash())) {
-            throw new RuntimeException("Invalid credentials");
+            throw new InvalidCredentialsException("Invalid credentials");
         }
 
         // Revoke previous active sessions
@@ -166,10 +169,10 @@ public class AuthService implements UserDetailsService {
      */
     public TokenResponse refresh(String refreshToken) {
         Session session = sessionRepository.findByRefreshToken(refreshToken)
-                .orElseThrow(() -> new RuntimeException("Invalid refresh token"));
+                .orElseThrow(() -> new ResourceNotFoundException("Invalid refresh token"));
 
         if (Boolean.TRUE.equals(session.getIsRevoked())) {
-            throw new RuntimeException("Token revoked");
+            throw new InvalidCredentialsException("Token revoked");
         }
 
         // Generate a new access token (valid for 15 minutes)
@@ -191,7 +194,7 @@ public class AuthService implements UserDetailsService {
     // ----------------- HELPER -----------------
     public User getUserByUsername(String username) {
         return userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
     }
 
     // ----------------- SPRING SECURITY -----------------

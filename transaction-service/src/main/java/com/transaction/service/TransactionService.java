@@ -14,6 +14,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -31,6 +33,7 @@ public class TransactionService {
     @Lazy
     private TransactionService self;
 
+    @Transactional(readOnly = true, isolation = Isolation.READ_COMMITTED)
     public List<Transaction> getTransactionsByAccountId(Long accountId) {
         log.info("Fetching transactions for accountId={}", accountId);
         try {
@@ -67,9 +70,15 @@ public class TransactionService {
      * </p>
      */
     public Transaction performTransaction(TransactionRequest request) {
-        Transaction txn = createTransactionRecord(request);
+        // Step 1: Create PENDING transaction in a new transaction (REQUIRES_NEW).
+        // This ensures the record exists even if the subsequent logic fails.
+        Transaction txn = self.createTransactionRecord(request);
+        
         try {
+            // Step 2: Call external service (Business Logic)
             self.callAccountServiceWithRetry(request); // may throw typed Downstream* exceptions
+            
+            // Step 3: Update status to SUCCESS
             txn.setStatus(TransactionStatus.SUCCESS);
             log.info("Transaction SUCCESS: {}", txn.getReferenceNumber());
         } catch (DownstreamServiceException ex) {
@@ -88,8 +97,10 @@ public class TransactionService {
 
     /**
      * Create initial transaction record in PENDING state.
+     * Uses REQUIRES_NEW to ensure this record is committed immediately,
+     * acting as an audit trail even if the main flow fails later.
      */
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public Transaction createTransactionRecord(TransactionRequest request) {
         Transaction txn = Transaction.builder()
                 .accountId(request.accountId())

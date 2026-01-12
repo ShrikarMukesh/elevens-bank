@@ -7,6 +7,8 @@ import com.cards.model.CardType;
 import com.cards.model.Network;
 import com.cards.repository.CardRepository;
 import com.cards.service.CardService;
+import com.cards.exception.ResourceNotFoundException;
+import com.cards.exception.BadRequestException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -25,6 +27,12 @@ public class CardServiceImpl implements CardService {
 
     private final CardRepository cardRepository;
     private final PasswordEncoder passwordEncoder;
+
+    // Single Random instance reused across method calls
+    private static final Random RANDOM = new Random();
+
+    // Constant for duplicated "Card not found" literal
+    private static final String CARD_NOT_FOUND = "Card not found";
 
     public CardServiceImpl(CardRepository cardRepository, PasswordEncoder passwordEncoder) {
         this.cardRepository = cardRepository;
@@ -77,11 +85,10 @@ public class CardServiceImpl implements CardService {
         }
 
         StringBuilder number = new StringBuilder(binPrefix);
-        Random random = new Random();
 
-        // Fill up to 15 digits
+        // Fill up to 15 digits using the shared Random
         while (number.length() < 15) {
-            number.append(random.nextInt(10));
+            number.append(RANDOM.nextInt(10));
         }
 
         // ✅ Luhn algorithm for checksum digit
@@ -107,7 +114,7 @@ public class CardServiceImpl implements CardService {
     public Card getCardById(Long id) {
         log.info("Fetching card with id: {}", id);
         com.cards.entity.Card entity = cardRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Card not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(CARD_NOT_FOUND));
         return mapToModel(entity);
     }
 
@@ -116,7 +123,7 @@ public class CardServiceImpl implements CardService {
         log.info("Fetching cards for customerId: {}", customerId);
         return cardRepository.findByCustomerId(customerId).stream()
                 .map(this::mapToModel)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -124,7 +131,7 @@ public class CardServiceImpl implements CardService {
         log.info("Fetching cards for accountId: {}", accountId);
         return cardRepository.findByAccountId(accountId).stream()
                 .map(this::mapToModel)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -132,14 +139,14 @@ public class CardServiceImpl implements CardService {
         log.info("Fetching all cards");
         return cardRepository.findAll().stream()
                 .map(this::mapToModel)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
     public void blockCard(Long id) {
         log.info("Blocking card with id: {}", id);
         com.cards.entity.Card card = cardRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Card not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(CARD_NOT_FOUND));
         card.setStatus(com.cards.entity.CardStatus.BLOCKED);
         cardRepository.save(card);
         log.info("Successfully blocked card with id: {}", id);
@@ -149,7 +156,7 @@ public class CardServiceImpl implements CardService {
     public void updateStatus(Long id, String status) {
         log.info("Updating status for card with id: {} to {}", id, status);
         com.cards.entity.Card card = cardRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Card not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(CARD_NOT_FOUND));
         card.setStatus(com.cards.entity.CardStatus.valueOf(status.toUpperCase()));
         cardRepository.save(card);
         log.info("Successfully updated status for card with id: {} to {}", id, status);
@@ -159,11 +166,11 @@ public class CardServiceImpl implements CardService {
     public void activateCard(Long id, String pin) {
         log.info("Activating card with id: {}", id);
         com.cards.entity.Card card = cardRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Card not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(CARD_NOT_FOUND));
 
         if (card.getStatus() == com.cards.entity.CardStatus.ACTIVE) {
             log.warn("Attempted to activate an already active card with id: {}", id);
-            throw new RuntimeException("Card is already active");
+            throw new BadRequestException("Card is already active");
         }
 
         card.setPinHash(passwordEncoder.encode(pin));
@@ -176,16 +183,16 @@ public class CardServiceImpl implements CardService {
     public void resetPin(Long id, String oldPin, String newPin) {
         log.info("Resetting PIN for card with id: {}", id);
         com.cards.entity.Card card = cardRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Card not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(CARD_NOT_FOUND));
 
         if (card.getStatus() != com.cards.entity.CardStatus.ACTIVE) {
             log.warn("Attempted to reset PIN for an inactive card with id: {}", id);
-            throw new RuntimeException("Card must be active to reset PIN");
+            throw new BadRequestException("Card must be active to reset PIN");
         }
 
         if (!passwordEncoder.matches(oldPin, card.getPinHash())) {
             log.warn("Invalid old PIN provided for card with id: {}", id);
-            throw new RuntimeException("Invalid old PIN");
+            throw new BadRequestException("Invalid old PIN");
         }
 
         card.setPinHash(passwordEncoder.encode(newPin));
@@ -197,7 +204,7 @@ public class CardServiceImpl implements CardService {
     public Card reissueCard(Long id) {
         log.info("Reissuing card for original card id: {}", id);
         com.cards.entity.Card oldCard = cardRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Card not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(CARD_NOT_FOUND));
 
         // Block the old card
         oldCard.setStatus(com.cards.entity.CardStatus.BLOCKED);
@@ -213,7 +220,7 @@ public class CardServiceImpl implements CardService {
         newCardRequest.setNetwork(Network.valueOf(oldCard.getNetwork().name()));
 
         newCardRequest.setExpiryDate(LocalDate.now().plusYears(3));
-        newCardRequest.setCvv(String.valueOf(new Random().nextInt(900) + 100));
+        newCardRequest.setCvv(String.valueOf(RANDOM.nextInt(900) + 100));
         newCardRequest.setPinHash(oldCard.getPinHash());
         newCardRequest.setDailyLimit(oldCard.getDailyLimit());
         newCardRequest.setMonthlyLimit(oldCard.getMonthlyLimit());
