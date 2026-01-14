@@ -1,5 +1,5 @@
 package com.accounts.entity;
 
 public enum AccountStatus {
-    ACTIVE, INACTIVE, CLOSED, FROZEN
+    ACTIVE, INACTIVE, CLOSED, FROZEN, SUSPENDED
 }

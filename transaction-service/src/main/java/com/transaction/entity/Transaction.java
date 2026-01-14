@@ -29,7 +29,8 @@ public class Transaction {
     @Enumerated(EnumType.STRING)
     private TransactionType transactionType;
 
-    private Integer modeId; // reference to transaction_modes table
+    @Enumerated(EnumType.STRING)
+    private TransactionMode transactionMode;
 
     @Column(unique = true, nullable = false, length = 50)
     private String referenceNumber;

@@ -1,10 +1,8 @@
 package com.transaction.dto;
 
+import com.transaction.entity.TransactionMode;
 import com.transaction.entity.TransactionType;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 
@@ -13,6 +11,6 @@ public record TransactionRequest(
         Long targetAccountId,
         @NotNull BigDecimal amount,
         @NotNull TransactionType transactionType,
-        @NotNull Integer modeId,
+        @NotNull TransactionMode transactionMode,
         String description) {
 }

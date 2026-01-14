@@ -1,10 +1,8 @@
 package com.elevens.loanservice.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
@@ -22,6 +20,8 @@ public class RepaymentSchedule {
 
     @ManyToOne
     @JoinColumn(name = "loan_id", nullable = false)
+    @JsonBackReference // Breaks circular reference during serialization (Child side)
+    @ToString.Exclude  // Breaks circular reference during toString()
     private Loan loan;
 
     private LocalDate dueDate;

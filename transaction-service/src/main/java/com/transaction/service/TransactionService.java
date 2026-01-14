@@ -106,7 +106,7 @@ public class TransactionService {
                 .accountId(request.accountId())
                 .transactionType(request.transactionType())
                 .amount(request.amount())
-                .modeId(request.modeId())
+                .transactionMode(request.transactionMode()) // ✅ Updated to use transactionMode
                 .referenceNumber(UUID.randomUUID().toString())
                 .status(TransactionStatus.PENDING)
                 .description(request.description())

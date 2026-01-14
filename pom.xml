@@ -51,6 +51,7 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+            <!-- Managing the version for all child modules -->
             <dependency>
                 <groupId>net.logstash.logback</groupId>
                 <artifactId>logstash-logback-encoder</artifactId>
@@ -58,14 +59,6 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
-
-
-    <dependencies>
-        <dependency>
-            <groupId>net.logstash.logback</groupId>
-            <artifactId>logstash-logback-encoder</artifactId>
-        </dependency>
-    </dependencies>
 
     <build>
 		<plugins>

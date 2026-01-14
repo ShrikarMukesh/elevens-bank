@@ -8,7 +8,7 @@ import java.util.List;
 public interface CardService {
     Card createCard(CardRequest request);
     Card getCardById(Long id);
-    List<Card> getCardsByCustomerId(Long customerId);
+    List<Card> getCardsByCustomerId(String customerId);
     List<Card> getCardsByAccountId(Long accountId);
     List<Card> getAllCards();
     void blockCard(Long id);

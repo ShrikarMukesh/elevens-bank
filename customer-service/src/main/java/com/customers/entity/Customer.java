@@ -49,6 +49,10 @@ public class Customer {
     private Preferences preferences;
 
     private String status; // ACTIVE, INACTIVE, SUSPENDED, CLOSED
+    
+    private String riskProfile;
+    
+    private String segment;
 
     @CreatedDate
     private Instant createdAt;

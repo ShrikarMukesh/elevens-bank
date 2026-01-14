@@ -1,10 +1,12 @@
 package com.elevens.loanservice.model;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -40,5 +42,7 @@ public class Loan {
     private LocalDateTime approvedAt;
 
     @OneToMany(mappedBy = "loan", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonManagedReference // Breaks circular reference during serialization (Parent side)
+    @ToString.Exclude     // Breaks circular reference during toString()
     private List<RepaymentSchedule> repaymentSchedule;
 }

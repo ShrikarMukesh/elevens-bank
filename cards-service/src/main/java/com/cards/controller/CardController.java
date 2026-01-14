@@ -50,7 +50,7 @@ public class CardController implements CardsApi {
 
     @Override
     @PreAuthorize("hasRole('ADMIN') or @securityUtils.isCustomerOwner(#customerId)")
-    public ResponseEntity<List<Card>> getCardsByCustomer(Long customerId) {
+    public ResponseEntity<List<Card>> getCardsByCustomer(String customerId) {
         log.info("GET /cards/customer/{}", customerId);
         List<Card> cards = cardService.getCardsByCustomerId(customerId);
         log.info("Found {} cards for customerId: {}", cards.size(), customerId);

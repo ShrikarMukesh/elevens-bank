@@ -18,7 +18,7 @@ public class Card {
     private Long cardId;
 
     private Long accountId;
-    private Long customerId;
+    private String customerId;
 
     @Column(unique = true, length = 16, nullable = false)
     private String cardNumber;

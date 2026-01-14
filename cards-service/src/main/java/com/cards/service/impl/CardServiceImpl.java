@@ -118,8 +118,9 @@ public class CardServiceImpl implements CardService {
         return mapToModel(entity);
     }
 
+
     @Override
-    public List<Card> getCardsByCustomerId(Long customerId) {
+    public List<Card> getCardsByCustomerId(String customerId) {
         log.info("Fetching cards for customerId: {}", customerId);
         return cardRepository.findByCustomerId(customerId).stream()
                 .map(this::mapToModel)

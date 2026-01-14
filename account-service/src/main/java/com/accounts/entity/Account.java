@@ -53,6 +53,9 @@ public class Account implements Serializable {
     @Column(length = 10)
     private String branchCode;
 
+    @Column(length = 100)
+    private String branchName;
+
     @Builder.Default
     @Column(precision = 5, scale = 2)
     private BigDecimal interestRate = BigDecimal.ZERO;
