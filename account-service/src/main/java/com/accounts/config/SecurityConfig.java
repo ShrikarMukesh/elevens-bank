@@ -42,6 +42,7 @@ public class SecurityConfig {
                                 .requestMatchers("/actuator/**").permitAll()
                                 .requestMatchers("/api/accounts/graphiql/**").permitAll()
                                 .requestMatchers("/api/accounts/graphql").permitAll()
+                                .requestMatchers("/api/accounts/**").permitAll() // Allow internal calls for now or use proper service-to-service auth
                                 .anyRequest().authenticated()
                         // SRP: Only responsible for defining authorization rules (no business logic).
                 );

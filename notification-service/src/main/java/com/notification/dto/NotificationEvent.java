@@ -2,7 +2,6 @@ package com.notification.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import lombok.Data;
 import java.time.Instant;
 import java.util.Map;
 

@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 public class NotificationEventConsumer {
 
     private final NotificationService notificationService;
-    private final ObjectMapper objectMapper; // <-- Injected by Spring Boot
+    private final ObjectMapper objectMapper;
 
     @KafkaListener(topics = "${spring.kafka.topic.name}", groupId = "${spring.kafka.consumer.group-id}")
     public void consume(String message) {

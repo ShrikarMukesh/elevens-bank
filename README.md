@@ -55,7 +55,7 @@ flowchart TB
     Clients -->|HTTPS/REST| APIGateway
 
     subgraph "Core Banking Domain"
-        APIGateway[API Gateway\n(Spring Cloud Gateway)]
+        APIGateway[API Gateway<br/>Spring Cloud Gateway]
         AuthService[Auth Service]
         AccountService[Account Service]
         TxnService[Transaction Service]
@@ -66,9 +66,9 @@ flowchart TB
     end
 
     subgraph "Infrastructure"
-        Kafka[Apache Kafka\n(Event Bus)]
+        Kafka[Apache Kafka<br/>Event Bus]
         Eureka[Eureka Registry]
-        Zipkin[Zipkin\n(Tracing)]
+        Zipkin[Zipkin<br/>Tracing]
     end
 
     APIGateway --> AuthService
@@ -87,8 +87,8 @@ flowchart TB
     Kafka -.-> AccountService
     Kafka -.-> CustomerService
 
-    classDef service fill:#f9f,stroke:#333,stroke-width:2px;
-    class AuthService,AccountService,TxnService,CardService,LoanService,NotifService,CustomerService service;
+    classDef service fill:#4682B4,stroke:#333,stroke-width:2px,color:white;
+    class APIGateway,AuthService,AccountService,TxnService,CardService,LoanService,NotifService,CustomerService service;
 ```
 
 ---

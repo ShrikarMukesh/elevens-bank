@@ -32,6 +32,8 @@ public class NotificationService {
     @Autowired
     private SmsService smsService;
 
+
+
     public Flux<Notification> getNotificationsByCustomerId(String customerId) {
         log.info("Fetching notifications for customerId: {}", customerId);
         return notificationRepository.findByCustomerId(customerId)
@@ -156,18 +158,11 @@ public class NotificationService {
                             .doOnNext(saved -> log.info("Notification record created with ID: {}",
                                     saved.getNotificationId()))
                             .flatMap(saved -> Mono.fromRunnable(() -> {
-                                if ("EMAIL".equalsIgnoreCase(event.channel())) {
-                                    log.info("Sending EMAIL to customerId: {}", event.customerId());
-                                    // Assuming smsService/emailService are blocking, we might want to offload them
-                                    // if they take time
-                                    // For now, keeping it simple as per migration request
-                                    smsService.sendSms(event.customerId(), message);
-                                } else if ("SMS".equalsIgnoreCase(event.channel())) {
-                                    log.info("Sending SMS to customerId: {}", event.customerId());
-                                    smsService.sendSms(event.customerId(), message);
-                                } else {
-                                    log.warn("⚠️ Unknown channel: {} — skipping send.", event.channel());
-                                }
+                                log.info("Sending EMAIL to customerId: {}", event.customerId());
+                                emailService.sendEmail(event.customerId(), subject, message);
+
+                                log.info("Sending SMS to customerId: {}", event.customerId());
+                                smsService.sendSms(event.customerId(), message);
                             }));
                 })
                 .doOnSuccess(v -> log.info("✅ Notification processed and stored successfully for eventType: {}",

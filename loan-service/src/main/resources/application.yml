@@ -48,7 +48,14 @@ spring:
         format_sql: true
         dialect: org.hibernate.dialect.MySQLDialect
 
- 
+  # ----------------------------
+  # ⚙️ KAFKA CONFIGURATION
+  # ----------------------------
+  kafka:
+    bootstrap-servers: localhost:29093
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
 
 # ============================
 # 🧠 LOGGING CONFIGURATION

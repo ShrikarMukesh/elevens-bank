@@ -27,7 +27,7 @@ public class SmsService {
     }
 
     public void sendSms(String to, String body) {
-        to = "+918618092957";
+        to = "+919845484475";
         try {
             Message message = Message.creator(
                     new PhoneNumber(to),

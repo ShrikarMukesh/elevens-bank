@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
@@ -18,7 +19,10 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -28,6 +32,7 @@ public class TransactionService {
 
     private final TransactionRepository transactionRepository;
     private final AccountClient accountClient;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
 
     @Autowired
     @Lazy
@@ -81,6 +86,10 @@ public class TransactionService {
             // Step 3: Update status to SUCCESS
             txn.setStatus(TransactionStatus.SUCCESS);
             log.info("Transaction SUCCESS: {}", txn.getReferenceNumber());
+            
+            // Step 4: Publish event to Kafka for Notification Service
+            publishTransactionEvent(txn);
+
         } catch (DownstreamServiceException ex) {
             txn.setStatus(TransactionStatus.FAILED);
             txn.setDescription("Downstream %s failed: %s".formatted(ex.getService(), ex.getMessage()));
@@ -132,7 +141,7 @@ public class TransactionService {
      * a struggling downstream service ("Thundering Herd" problem).
      * </p>
      */
-    @Retryable(value = RetryableException.class, maxAttempts = 3, backoff = @Backoff(delay = 100))
+    @Retryable(value = {RetryableException.class, feign.RetryableException.class}, maxAttempts = 3, backoff = @Backoff(delay = 100))
     public void callAccountServiceWithRetry(TransactionRequest request) {
         try {
             switch (request.transactionType()) {
@@ -168,6 +177,40 @@ public class TransactionService {
     private boolean isLockTimeoutOrOptimisticLock(Exception e) {
         String msg = e.getMessage() == null ? "" : e.getMessage().toLowerCase();
         return msg.contains("lock wait timeout") || msg.contains("optimistic lock");
+    }
+
+    private void publishTransactionEvent(Transaction txn) {
+        try {
+            Map<String, Object> event = new HashMap<>();
+            event.put("eventSource", "TRANSACTION_SERVICE");
+            
+            String eventType = switch (txn.getTransactionType()) {
+                case DEPOSIT -> "CREDIT_ALERT";
+                case WITHDRAWAL -> "DEBIT_ALERT";
+                case TRANSFER -> "DEBIT_ALERT"; // For sender
+                default -> "TRANSACTION_ALERT";
+            };
+            
+            event.put("eventType", eventType);
+            event.put("customerId", "CUST_PLACEHOLDER"); // Ideally fetch from Account Service or pass in request
+            event.put("accountId", txn.getAccountId().toString());
+            event.put("channel", "EMAIL"); // Default to EMAIL, can be dynamic
+            event.put("eventTime", Instant.now().toString());
+            
+            Map<String, Object> data = new HashMap<>();
+            data.put("amount", txn.getAmount());
+            data.put("maskedAccount", "XXXX" + txn.getAccountId().toString().substring(Math.max(0, txn.getAccountId().toString().length() - 4)));
+            data.put("mode", txn.getTransactionMode());
+            data.put("customerName", "Customer"); // Placeholder
+            data.put("source", "Bank Transfer");
+            
+            event.put("data", data);
+
+            kafkaTemplate.send("bank.events", event);
+            log.info("Published transaction event to Kafka: {}", eventType);
+        } catch (Exception e) {
+            log.error("Failed to publish transaction event", e);
+        }
     }
 
     private static class RetryableException extends RuntimeException {
