@@ -38,3 +38,8 @@ twilio:
     token: ''
   from:
     number: ''
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/
