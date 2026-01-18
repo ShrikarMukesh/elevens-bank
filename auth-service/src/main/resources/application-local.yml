@@ -1,0 +1,98 @@
+# ============================
+# 🧩 SPRING APPLICATION CONFIG
+# ============================
+spring:
+  profile: local
+  application:
+    name: auth-service
+
+  # ----------------------------
+  # 🗄️ DATABASE CONFIGURATION
+  # ----------------------------
+  datasource:
+    url: jdbc:mysql://localhost:3306/elevens-bank?useSSL=false&allowPublicKeyRetrieval=true
+    username: vaishnavi
+    password: Vaishnavi@123
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
+
+  # ----------------------------
+  # ⚙️ KAFKA CONFIGURATION
+  # ----------------------------
+  kafka:
+    bootstrap-servers: localhost:29092
+    producer:
+      acks: all
+      retries: 3
+      batch-size: 16384
+      linger-ms: 5
+      buffer-memory: 33554432
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: false
+    consumer:
+      group-id: auth-service-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+    listener:
+      ack-mode: record
+      missing-topics-fatal: false
+    template:
+      default-topic: bank.user.event.v1   # default fallback topic
+    properties:
+      security.protocol: PLAINTEXT        # adjust if SSL/SASL is used
+
+# ============================
+# 🌐 SERVER CONFIGURATION
+# ============================
+server:
+  port: 7001
+
+management:
+  server:
+    port: 8086          # Separate port for Actuator (health/info)
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+
+# ============================
+# 🧠 LOGGING CONFIGURATION
+# ============================
+logging:
+  level:
+    root: INFO
+    org.springframework.web: INFO
+    org.springframework.kafka: INFO
+    com.elevensbank.auth: DEBUG
+
+# ============================
+# 🧩 EUREKA DISCOVERY (OPTIONAL)
+# ============================
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    prefer-ip-address: true
+    lease-renewal-interval-in-seconds: 10
+    lease-expiration-duration-in-seconds: 30
