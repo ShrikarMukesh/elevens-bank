@@ -16,7 +16,7 @@ public class EmailService {
     }
 
     public void sendEmail(String to, String subject, String body) {
-        to = "mukesh.shrikar11@gmail.com";
+
         try {
             SimpleMailMessage message = new SimpleMailMessage();
             message.setTo(to);
@@ -29,4 +29,3 @@ public class EmailService {
         }
     }
 }
-

@@ -3,6 +3,7 @@ package com.transaction.controller;
 import com.transaction.dto.TransactionRequest;
 import com.transaction.entity.Transaction;
 import com.transaction.entity.TransactionType;
+import com.transaction.entity.TransactionMode;
 import com.transaction.service.TransactionService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -28,13 +29,13 @@ public class TransactionControllerTest {
     @InjectMocks
     TransactionController transactionController;
 
-    public Transaction transactionFixture(){
+    public Transaction transactionFixture() {
         Transaction transaction1 = new Transaction();
         transaction1.setTransactionId(12345L);
         return transaction1;
     }
 
-    public List<Transaction> listOfTransactionsFixture(){
+    public List<Transaction> listOfTransactionsFixture() {
 
         List<Transaction> transactionList = new ArrayList<>();
 
@@ -45,15 +46,14 @@ public class TransactionControllerTest {
     }
 
     @Test
-    public void performTransaction_PositiveTestCase(){
+    public void performTransaction_PositiveTestCase() {
         TransactionRequest request = new TransactionRequest(
                 101L,
                 null,
                 BigDecimal.valueOf(100.00),
                 TransactionType.DEPOSIT,
-                1,
-                "Test Deposit"
-        );
+                TransactionMode.CASH,
+                "Test Deposit");
 
         Transaction expectedTransaction = transactionFixture();
         when(transactionService.performTransaction(request)).thenReturn(expectedTransaction);
@@ -65,14 +65,14 @@ public class TransactionControllerTest {
     }
 
     @Test
-    public void getTransactionsByAccountId_PositiveTestCase(){
-         when(transactionService.getTransactionsByAccountId(101L)).thenReturn(listOfTransactionsFixture());
+    public void getTransactionsByAccountId_PositiveTestCase() {
+        when(transactionService.getTransactionsByAccountId(101L)).thenReturn(listOfTransactionsFixture());
 
-         ResponseEntity<List<Transaction>> response = transactionController.getTransactionsByAccountId(101L);
+        ResponseEntity<List<Transaction>> response = transactionController.getTransactionsByAccountId(101L);
 
-         Assertions.assertEquals(HttpStatus.OK, response.getStatusCode());
-         Assertions.assertNotNull(response.getBody());
-         Assertions.assertEquals(1, response.getBody().size());
+        Assertions.assertEquals(HttpStatus.OK, response.getStatusCode());
+        Assertions.assertNotNull(response.getBody());
+        Assertions.assertEquals(1, response.getBody().size());
     }
 
 }

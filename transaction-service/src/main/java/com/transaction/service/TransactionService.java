@@ -78,15 +78,15 @@ public class TransactionService {
         // Step 1: Create PENDING transaction in a new transaction (REQUIRES_NEW).
         // This ensures the record exists even if the subsequent logic fails.
         Transaction txn = self.createTransactionRecord(request);
-        
+
         try {
             // Step 2: Call external service (Business Logic)
             self.callAccountServiceWithRetry(request); // may throw typed Downstream* exceptions
-            
+
             // Step 3: Update status to SUCCESS
             txn.setStatus(TransactionStatus.SUCCESS);
             log.info("Transaction SUCCESS: {}", txn.getReferenceNumber());
-            
+
             // Step 4: Publish event to Kafka for Notification Service
             publishTransactionEvent(txn);
 
@@ -141,7 +141,8 @@ public class TransactionService {
      * a struggling downstream service ("Thundering Herd" problem).
      * </p>
      */
-    @Retryable(value = {RetryableException.class, feign.RetryableException.class}, maxAttempts = 3, backoff = @Backoff(delay = 100))
+    @Retryable(value = { RetryableException.class,
+            feign.RetryableException.class }, maxAttempts = 3, backoff = @Backoff(delay = 100))
     public void callAccountServiceWithRetry(TransactionRequest request) {
         try {
             switch (request.transactionType()) {
@@ -183,27 +184,42 @@ public class TransactionService {
         try {
             Map<String, Object> event = new HashMap<>();
             event.put("eventSource", "TRANSACTION_SERVICE");
-            
+
             String eventType = switch (txn.getTransactionType()) {
                 case DEPOSIT -> "CREDIT_ALERT";
                 case WITHDRAWAL -> "DEBIT_ALERT";
-                case TRANSFER -> "DEBIT_ALERT"; // For sender
+                case TRANSFER -> "DEBIT_ALERT";
                 default -> "TRANSACTION_ALERT";
             };
-            
+
             event.put("eventType", eventType);
-            event.put("customerId", "CUST_PLACEHOLDER"); // Ideally fetch from Account Service or pass in request
+            // In a real app, this should come from Account Service or User Service
+            event.put("customerId", "CUST_PLACEHOLDER");
             event.put("accountId", txn.getAccountId().toString());
-            event.put("channel", "EMAIL"); // Default to EMAIL, can be dynamic
+            event.put("channel", "EMAIL");
             event.put("eventTime", Instant.now().toString());
-            
+
             Map<String, Object> data = new HashMap<>();
             data.put("amount", txn.getAmount());
-            data.put("maskedAccount", "XXXX" + txn.getAccountId().toString().substring(Math.max(0, txn.getAccountId().toString().length() - 4)));
+
+            String maskedAccount = "XXXX" + txn.getAccountId().toString()
+                    .substring(Math.max(0, txn.getAccountId().toString().length() - 4));
+            data.put("maskedAccount", maskedAccount);
+
             data.put("mode", txn.getTransactionMode());
-            data.put("customerName", "Customer"); // Placeholder
-            data.put("source", "Bank Transfer");
-            
+            data.put("referenceId", txn.getReferenceNumber());
+            data.put("transactionDate", java.time.LocalDate.now().toString()); // Or formatted date
+            data.put("customerName", "Valued Customer"); // Placeholder until we fetch real name
+
+            // Customize source based on transaction type for better messages
+            if (txn.getTransactionType() == com.transaction.entity.TransactionType.DEPOSIT) {
+                data.put("source", "Cash Deposit/Transfer");
+            } else if (txn.getTransactionType() == com.transaction.entity.TransactionType.TRANSFER) {
+                data.put("source", "Transfer to other account");
+            } else {
+                data.put("source", "ATM/Bank Withdrawal");
+            }
+
             event.put("data", data);
 
             kafkaTemplate.send("bank.events", event);

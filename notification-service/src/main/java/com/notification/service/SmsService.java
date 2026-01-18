@@ -27,13 +27,12 @@ public class SmsService {
     }
 
     public void sendSms(String to, String body) {
-        to = "+919845484475";
+
         try {
             Message message = Message.creator(
                     new PhoneNumber(to),
                     new PhoneNumber(fromNumber),
-                    body
-            ).create();
+                    body).create();
             log.info("📱 Hi Sachin SMS sent to {}. SID: {}", to, message.getSid());
         } catch (Exception e) {
             log.error("❌ Failed to send SMS: {}", e.getMessage());
