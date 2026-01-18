@@ -27,6 +27,10 @@ public class SmsService {
     }
 
     public void sendSms(String to, String body) {
+        // Prepend +91 if the number is 10 digits and doesn't start with +
+        if (to != null && to.matches("\\d{10}")) {
+            to = "+91" + to;
+        }
 
         try {
             Message message = Message.creator(

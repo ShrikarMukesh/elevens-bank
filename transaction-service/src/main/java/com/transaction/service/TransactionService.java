@@ -1,7 +1,10 @@
 package com.transaction.service;
 
 import com.transaction.clients.AccountClient;
+import com.transaction.clients.CustomerClient;
+import com.transaction.dto.AccountResponse;
 import com.transaction.dto.AccountTransactionRequest;
+import com.transaction.dto.CustomerResponse;
 import com.transaction.dto.TransactionRequest;
 import com.transaction.entity.Transaction;
 import com.transaction.entity.TransactionStatus;
@@ -32,6 +35,7 @@ public class TransactionService {
 
     private final TransactionRepository transactionRepository;
     private final AccountClient accountClient;
+    private final CustomerClient customerClient;
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
     @Autowired
@@ -182,6 +186,15 @@ public class TransactionService {
 
     private void publishTransactionEvent(Transaction txn) {
         try {
+            // Fetch account details to get customerId
+            AccountResponse account = accountClient.getAccount(txn.getAccountId());
+            String customerId = account.customerId();
+            
+            // Fetch customer details to get name and email
+            CustomerResponse customer = customerClient.getCustomer(customerId);
+            String customerName = customer.firstName() + " " + customer.lastName();
+            String customerEmail = customer.email();
+
             Map<String, Object> event = new HashMap<>();
             event.put("eventSource", "TRANSACTION_SERVICE");
 
@@ -193,10 +206,10 @@ public class TransactionService {
             };
 
             event.put("eventType", eventType);
-            // In a real app, this should come from Account Service or User Service
-            event.put("customerId", "CUST_PLACEHOLDER");
+            event.put("customerId", customerId);
             event.put("accountId", txn.getAccountId().toString());
             event.put("channel", "EMAIL");
+            event.put("email", customerEmail); // Add email for notification service
             event.put("eventTime", Instant.now().toString());
 
             Map<String, Object> data = new HashMap<>();
@@ -208,8 +221,8 @@ public class TransactionService {
 
             data.put("mode", txn.getTransactionMode());
             data.put("referenceId", txn.getReferenceNumber());
-            data.put("transactionDate", java.time.LocalDate.now().toString()); // Or formatted date
-            data.put("customerName", "Valued Customer"); // Placeholder until we fetch real name
+            data.put("transactionDate", java.time.LocalDate.now().toString());
+            data.put("customerName", customerName);
 
             // Customize source based on transaction type for better messages
             if (txn.getTransactionType() == com.transaction.entity.TransactionType.DEPOSIT) {

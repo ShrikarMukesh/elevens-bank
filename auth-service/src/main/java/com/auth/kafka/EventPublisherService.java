@@ -15,8 +15,9 @@ import java.time.LocalDateTime;
 import java.util.concurrent.CompletableFuture;
 
 @Service
-@RequiredArgsConstructor
+@RequiredArgsConstructor // DIP: Dependencies (KafkaTemplate, Repository, Mapper) are injected via constructor, decoupling implementation.
 @Slf4j
+// SRP: This class has a single responsibility - reliably publishing events to Kafka using the Outbox pattern.
 public class EventPublisherService {
 
     private final KafkaTemplate<String, Object> kafkaTemplate;
@@ -24,6 +25,7 @@ public class EventPublisherService {
     private final ObjectMapper objectMapper;
 
     @Async
+    // OCP: The method accepts a generic 'Object' event, allowing new event types to be supported without modifying this code.
     public void publishEvent(String topic, String key, Object event) {
         try {
             // 1️⃣ Save event in Outbox

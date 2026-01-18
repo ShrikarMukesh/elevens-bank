@@ -1,6 +1,7 @@
 package com.transaction.clients;
 
 import com.transaction.dto.AccountTransactionRequest;
+import com.transaction.dto.AccountResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,5 +23,8 @@ public interface AccountClient {
 
     @PostMapping("/api/accounts/transfer")
     void transfer(@RequestBody AccountTransactionRequest request);
+
+    @GetMapping("/api/accounts/{id}")
+    AccountResponse getAccount(@PathVariable("id") Long accountId);
 
 }

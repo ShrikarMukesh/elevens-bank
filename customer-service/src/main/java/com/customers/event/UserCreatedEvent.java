@@ -10,5 +10,6 @@ public record UserCreatedEvent(
         String username,
         String email,
         String fullName,
+        String phone,
         LocalDateTime createdAt) {
 }

@@ -1,6 +1,7 @@
 package com.customers.kafka;
 
 import com.customers.entity.Customer;
+import com.customers.entity.PhoneNumber;
 import com.customers.event.CustomerEvent;
 import com.customers.event.UserCreatedEvent;
 import com.customers.repository.CustomerRepository;
@@ -11,6 +12,8 @@ import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -33,7 +36,7 @@ public class UserEventConsumer {
             }
 
             // Generate a unique customerId
-            String generatedCustomerId = "CUST-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+            String generatedCustomerId = "ELEVEN" + UUID.randomUUID().toString().substring(0, 4).toUpperCase();
 
             // Split full name into first and last name
             String firstName = event.fullName();
@@ -44,12 +47,23 @@ public class UserEventConsumer {
                 lastName = parts[1];
             }
 
+            // Handle phone number conversion
+            List<PhoneNumber> phoneNumbers = null;
+            if (event.phone() != null && !event.phone().isEmpty()) {
+                PhoneNumber phoneNumber = new PhoneNumber();
+                phoneNumber.setNumber(event.phone());
+                phoneNumber.setType("MOBILE"); // Default type
+                phoneNumber.setPrimary(true);
+                phoneNumbers = Collections.singletonList(phoneNumber);
+            }
+
             Customer customer = Customer.builder()
                     .customerId(generatedCustomerId)
                     .userId(event.userId())
                     .firstName(firstName)
                     .lastName(lastName)
                     .email(event.email())
+                    .phoneNumbers(phoneNumbers)
                     .status("ACTIVE")
                     .createdAt(Instant.now())
                     .updatedAt(Instant.now())
