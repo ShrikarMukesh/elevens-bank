@@ -1,5 +1,6 @@
 package com.notification.service;
 
+import com.notification.dto.CustomerDto;
 import com.notification.dto.NotificationEvent;
 import com.notification.entity.Notification;
 import com.notification.entity.NotificationTemplate;
@@ -9,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -25,14 +27,13 @@ public class NotificationService {
     private final NotificationRepository notificationRepository;
     private final NotificationTemplateRepository templateRepository;
     private final TemplateEngineService templateEngineService;
+    private final WebClient.Builder webClientBuilder;
 
     @Autowired
     private EmailService emailService;
 
     @Autowired
     private SmsService smsService;
-
-
 
     public Flux<Notification> getNotificationsByCustomerId(String customerId) {
         log.info("Fetching notifications for customerId: {}", customerId);
@@ -157,16 +158,42 @@ public class NotificationService {
                     return notificationRepository.save(notification)
                             .doOnNext(saved -> log.info("Notification record created with ID: {}",
                                     saved.getNotificationId()))
-                            .flatMap(saved -> Mono.fromRunnable(() -> {
-                                log.info("Sending EMAIL to customerId: {}", event.customerId());
-                                emailService.sendEmail(event.customerId(), subject, message);
-
-                                log.info("Sending SMS to customerId: {}", event.customerId());
-                                smsService.sendSms(event.customerId(), message);
-                            }));
+                            .flatMap(saved -> fetchCustomerDetails(event.customerId())
+                                    .flatMap(customerDto -> {
+                                        if ("EMAIL".equalsIgnoreCase(event.channel())) {
+                                            log.info("Sending EMAIL to customerId: {} at {}", event.customerId(), customerDto.getEmail());
+                                            emailService.sendEmail(customerDto.getEmail(), subject, message);
+                                        } else if ("SMS".equalsIgnoreCase(event.channel())) {
+                                            if (customerDto.getPhoneNumbers() != null) {
+                                                String mobileNumber = customerDto.getPhoneNumbers().stream()
+                                                        .filter(CustomerDto.PhoneNumberDto::isPrimary)
+                                                        .findFirst()
+                                                        .map(CustomerDto.PhoneNumberDto::getNumber)
+                                                        .orElse(null);
+                                                if (mobileNumber != null) {
+                                                    log.info("Sending SMS to customerId: {} at {}", event.customerId(), mobileNumber);
+                                                    smsService.sendSms(mobileNumber, message);
+                                                } else {
+                                                    log.warn("No primary mobile number found for customerId: {}", event.customerId());
+                                                }
+                                            } else {
+                                                log.warn("No phone numbers found for customerId: {}", event.customerId());
+                                            }
+                                        }
+                                        return Mono.empty();
+                                    }));
                 })
                 .doOnSuccess(v -> log.info("✅ Notification processed and stored successfully for eventType: {}",
                         event.eventType()))
                 .then();
+    }
+
+    private Mono<CustomerDto> fetchCustomerDetails(String customerId) {
+        return webClientBuilder.build()
+                .get()
+                .uri("http://customer-service/api/customers/" + customerId)
+                .retrieve()
+                .bodyToMono(CustomerDto.class)
+                .doOnError(e -> log.error("Error fetching customer details for customerId: {}", customerId, e));
     }
 }
