@@ -2,8 +2,7 @@
 # 🧩 SPRING APPLICATION CONFIG
 # ============================
 spring:
-  profiles:
-    active: local
+  profile: dev
   application:
     name: auth-service
 
@@ -30,8 +29,8 @@ management:
   # ----------------------------
   datasource:
     url: jdbc:mysql://localhost:3306/elevens-bank?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-    username: shrikar
-    password: Mukesh@123
+    username: dev
+    password: dev@123
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
