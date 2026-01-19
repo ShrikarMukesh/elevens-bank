@@ -30,6 +30,13 @@ public class CustomerController implements com.customers.api.CustomersApi {
     }
 
     @Override
+    public ResponseEntity<CustomerDto> getCustomerByUserId(String userId) {
+        return customerService.getCustomerByUserId(userId)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @Override
     public ResponseEntity<CustomerDto> getCustomerByEmail(String email) {
         return customerService.getCustomerByEmail(email)
                 .map(ResponseEntity::ok)

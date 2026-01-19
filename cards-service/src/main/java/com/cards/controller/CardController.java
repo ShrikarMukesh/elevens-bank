@@ -16,6 +16,7 @@ import java.util.List;
 
 @RestController
 @Slf4j
+@CrossOrigin(origins = "*") // Allow all origins for dev simplicity
 public class CardController implements CardsApi {
 
     private final CardService cardService;

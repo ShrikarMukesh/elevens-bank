@@ -12,6 +12,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/loans")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "*") // Allow all origins for dev simplicity
 public class LoanController {
 
     private final LoanService loanService;

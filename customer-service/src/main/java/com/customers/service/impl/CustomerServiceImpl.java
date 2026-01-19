@@ -65,6 +65,12 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
+    public Optional<CustomerDto> getCustomerByUserId(String userId) {
+        return customerRepository.findByUserId(userId)
+                .map(customerMapper::toDto);
+    }
+
+    @Override
     public Optional<CustomerDto> getCustomerByEmail(String email) {
         return customerRepository.findByEmail(email)
                 .map(customerMapper::toDto);

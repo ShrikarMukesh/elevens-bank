@@ -93,6 +93,28 @@ paths:
               schema:
                 type: string
 
+  /api/customers/user/{userId}:
+    get:
+      tags:
+        - Customers
+      summary: Get customer by User ID
+      operationId: getCustomerByUserId
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Customer found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerDto"
+        "404":
+          description: Customer not found
+
   /api/customers/email/{email}:
     get:
       tags:
@@ -202,6 +224,10 @@ components:
         preferences:
           $ref: "#/components/schemas/PreferencesDto"
         status:
+          type: string
+        riskProfile:
+          type: string
+        segment:
           type: string
         createdAt:
           type: string

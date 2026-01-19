@@ -10,6 +10,8 @@ public interface CustomerService {
 
     Optional<CustomerDto> getCustomerById(String customerId);
 
+    Optional<CustomerDto> getCustomerByUserId(String userId);
+
     Optional<CustomerDto> getCustomerByEmail(String email);
 
     List<CustomerDto> getCustomersByStatus(String status);
