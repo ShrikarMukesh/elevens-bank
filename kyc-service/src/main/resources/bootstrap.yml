@@ -1,0 +1,10 @@
+spring:
+  cloud:
+    vault:
+      uri: http://localhost:8200
+      authentication: token
+      token: root # In production, use ENV VARS
+      kv:
+        enabled: true
+      transit:
+        enabled: true
