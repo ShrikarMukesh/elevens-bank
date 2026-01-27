@@ -24,6 +24,7 @@
         <module>transaction-service</module>
         <module>discovery-service</module>
 		<module>loan-service</module>
+		<module>kyc-service</module>
     </modules>
 	<url/>
 	<licenses>

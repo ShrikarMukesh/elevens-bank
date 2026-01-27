@@ -7,9 +7,7 @@ import java.time.Instant;
 @NoArgsConstructor
 @AllArgsConstructor
 public class KycDetails {
-    private String aadhaar;
-    private String pan;
-    private String passport;
-    private boolean verified;     // ✅ Added
-    private Instant verifiedAt;   // ✅ Added
+    private String kycId; // Reference to KYC Service Document ID
+    private String status; // PENDING, VERIFIED, REJECTED
+    private Instant verifiedAt;
 }

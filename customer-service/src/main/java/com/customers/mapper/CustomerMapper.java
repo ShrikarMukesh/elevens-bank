@@ -131,10 +131,11 @@ public class CustomerMapper {
         if (entity == null)
             return null;
         KycDetailsDto dto = new KycDetailsDto();
-        dto.setAadhaar(entity.getAadhaar());
-        dto.setPan(entity.getPan());
-        dto.setPassport(entity.getPassport());
-        dto.setVerified(entity.isVerified());
+        // PII fields are now handled by kyc-service. We do not map them here.
+        // dto.setAadhaar(entity.getAadhaar());
+        // dto.setPan(entity.getPan());
+        // dto.setPassport(entity.getPassport());
+        dto.setVerified("VERIFIED".equals(entity.getStatus()));
         if (entity.getVerifiedAt() != null) {
             dto.setVerifiedAt(entity.getVerifiedAt().atOffset(ZoneOffset.UTC));
         }
@@ -145,10 +146,11 @@ public class CustomerMapper {
         if (dto == null)
             return null;
         KycDetails entity = new KycDetails();
-        entity.setAadhaar(dto.getAadhaar());
-        entity.setPan(dto.getPan());
-        entity.setPassport(dto.getPassport());
-        entity.setVerified(Boolean.TRUE.equals(dto.getVerified()));
+        // PII fields are not stored in KycDetails anymore.
+        // entity.setAadhaar(dto.getAadhaar());
+        // entity.setPan(dto.getPan());
+        // entity.setPassport(dto.getPassport());
+        entity.setStatus(Boolean.TRUE.equals(dto.getVerified()) ? "VERIFIED" : "PENDING");
         if (dto.getVerifiedAt() != null) {
             entity.setVerifiedAt(dto.getVerifiedAt().toInstant());
         }

@@ -48,7 +48,7 @@ public class CustomerServiceImpl implements CustomerService {
                 .eventType("CUSTOMER_CREATED")
                 .customerId(saved.getCustomerId())
                 .userId(saved.getUserId())
-                .verified(saved.getKyc() != null && saved.getKyc().isVerified())
+                .verified("VERIFIED".equals(saved.getKyc() != null ? saved.getKyc().getStatus() : null))
                 .verifiedAt(saved.getKyc() != null ? saved.getKyc().getVerifiedAt() : null)
                 .build();
 
@@ -125,8 +125,10 @@ public class CustomerServiceImpl implements CustomerService {
             throw new RuntimeException("KYC details not found for customer: " + customerId);
         }
 
-        customer.getKyc().setVerified(verified);
-        customer.getKyc().setVerifiedAt(Instant.now());
+        customer.getKyc().setStatus(verified ? "VERIFIED" : "PENDING");
+        if (verified) {
+            customer.getKyc().setVerifiedAt(Instant.now());
+        }
         customerRepository.save(customer);
 
         log.info("Updated KYC for customer {} to {}", customerId, verified);
