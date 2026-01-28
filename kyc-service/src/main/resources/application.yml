@@ -3,9 +3,20 @@ spring:
     name: kyc-service
   data:
     mongodb:
-      uri: mongodb://localhost:27017/kyc_db
+      uri: mongodb://localhost:27017/elevens-bank
   main:
     allow-bean-definition-overriding: true
+  config:
+    import: vault://
+  cloud:
+    vault:
+      uri: http://localhost:8200
+      authentication: token
+      token: root # In production, use ENV VARS
+      kv:
+        enabled: true
+      transit:
+        enabled: true
 
 server:
   port: 8086

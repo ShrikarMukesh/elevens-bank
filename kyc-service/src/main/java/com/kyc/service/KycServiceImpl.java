@@ -22,9 +22,9 @@ public class KycServiceImpl {
 
         KycDocument document = KycDocument.builder()
                 .customerId(request.getCustomerId())
-                .aadhaarEnc(encryptionService.encrypt(request.getAadhaar()))
-                .panEnc(encryptionService.encrypt(request.getPan()))
-                .passportEnc(encryptionService.encrypt(request.getPassport()))
+                .aadhaarEnc(encryptionService.encrypt(request.getAadhaar(), request.getCustomerId(), "AADHAAR"))
+                .panEnc(encryptionService.encrypt(request.getPan(), request.getCustomerId(), "PAN"))
+                .passportEnc(encryptionService.encrypt(request.getPassport(), request.getCustomerId(), "PASSPORT"))
                 .aadhaarMasked(mask(request.getAadhaar()))
                 .panMasked(mask(request.getPan()))
                 .passportMasked(mask(request.getPassport()))
@@ -39,6 +39,16 @@ public class KycServiceImpl {
     public KycDocument getKyc(String customerId) {
         return kycRepository.findByCustomerId(customerId)
                 .orElseThrow(() -> new RuntimeException("KYC not found for customer: " + customerId));
+    }
+
+    public KycRequest decryptKyc(String customerId, String userId) {
+        KycDocument doc = getKyc(customerId);
+        KycRequest request = new KycRequest();
+        request.setCustomerId(doc.getCustomerId());
+        request.setAadhaar(encryptionService.decrypt(doc.getAadhaarEnc(), userId, customerId, "AADHAAR"));
+        request.setPan(encryptionService.decrypt(doc.getPanEnc(), userId, customerId, "PAN"));
+        request.setPassport(encryptionService.decrypt(doc.getPassportEnc(), userId, customerId, "PASSPORT"));
+        return request;
     }
 
     private String mask(String value) {
