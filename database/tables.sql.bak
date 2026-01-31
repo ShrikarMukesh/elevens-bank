@@ -165,26 +165,3 @@ CREATE TABLE loan_repayments (
     FOREIGN KEY (loan_id) REFERENCES loans(id),
     FOREIGN KEY (schedule_id) REFERENCES repayment_schedules(id)
 );
-
--- =================================================================
--- AUDIT LOGS (Added for Ingestion Pipeline)
--- =================================================================
-
-CREATE TABLE audit_logs (
-    log_id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    service_name VARCHAR(50) NOT NULL,      -- e.g., 'AUTH-SERVICE', 'ACCOUNT-SERVICE'
-    event_type VARCHAR(50) NOT NULL,        -- e.g., 'LOGIN_SUCCESS', 'STATUS_CHANGE'
-    user_id VARCHAR(50),                    -- User performing the action (or 'SYSTEM')
-    affected_entity_type VARCHAR(50),       -- e.g., 'USER', 'ACCOUNT', 'CARD'
-    affected_entity_id VARCHAR(50),         -- ID of the entity being acted upon
-    old_value TEXT,                         -- Previous state (optional, JSON/Text)
-    new_value TEXT,                         -- New state (optional, JSON/Text)
-    -- Extended Audit Fields
-    status_code INT,                        -- HTTP Status (200, 403) or Application Code
-    request_payload TEXT,                   -- The incoming request (HTTP body / Kafka message)
-    response_payload TEXT,                  -- The response sent back
-    error_message TEXT,                     -- Stack trace or error description if failed
-    ip_address VARCHAR(45),                 -- Client IP
-    description VARCHAR(255),               -- Human-readable summary
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);

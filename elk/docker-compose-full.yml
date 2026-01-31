@@ -1,0 +1,55 @@
+version: "3.8"
+
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.3
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - xpack.monitoring.collection.enabled=false
+      - ES_JAVA_OPTS=-Xms384m -Xmx384m
+    ports:
+      - "9200:9200"
+    deploy:
+      resources:
+        limits:
+          cpus: "1.5"
+          memory: 1g
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.11.3
+    depends_on:
+      - elasticsearch
+    volumes:
+      - ./pipeline/:/usr/share/logstash/pipeline/
+      - ./drivers/:/usr/share/logstash/drivers/
+      - /home/shrikar/Bank/elevens-bank:/logs
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      - LS_JAVA_OPTS=-Xms192m -Xmx192m
+      - XPACK_MONITORING_ENABLED=false
+    deploy:
+      resources:
+        limits:
+          cpus: "0.8"
+          memory: 512m
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.11.3
+    depends_on:
+      - elasticsearch
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    ports:
+      - "5601:5601"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512m
+
+volumes:
+  esdata:

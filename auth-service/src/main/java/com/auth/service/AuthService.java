@@ -1,6 +1,7 @@
 package com.auth.service;
 
 import com.auth.dto.TokenResponse;
+import com.auth.entity.AuditLog;
 import com.auth.entity.Session;
 import com.auth.entity.User;
 import com.auth.exception.BadRequestException;
@@ -8,6 +9,7 @@ import com.auth.exception.InvalidCredentialsException;
 import com.auth.exception.ResourceNotFoundException;
 import com.auth.kafka.EventPublisherService;
 import com.auth.kafka.UserCreatedEvent;
+import com.auth.repository.AuditLogRepository;
 import com.auth.repository.SessionRepository;
 import com.auth.repository.UserRepository;
 import com.auth.util.JwtUtil;
@@ -31,6 +33,7 @@ public class AuthService implements UserDetailsService {
 
     private final UserRepository userRepository;
     private final SessionRepository sessionRepository;
+    private final AuditLogRepository auditLogRepository; // Injected
     private final JwtUtil jwtUtil;
     private final PasswordEncoder passwordEncoder;
 
@@ -40,27 +43,6 @@ public class AuthService implements UserDetailsService {
     private String userEventsTopic;
 
     // ----------------- REGISTER -----------------
-    /**
-     * Registers a new user.
-     *
-     * <h2>Interview Topic: Password Storage</h2>
-     * <p>
-     * <b>Q: How should you store passwords?</b><br>
-     * A: Never store them in plain text. We use <b>BCrypt</b> (Salted Hashing).
-     * <br>
-     * <b>Q: Why not MD5 or SHA-256?</b><br>
-     * A: They are too fast, making them vulnerable to Brute Force/Rainbow Table
-     * attacks. BCrypt is "slow by design" (Work Factor).
-     * </p>
-     *
-     * <h2>Interview Topic: Event Driven Architecture</h2>
-     * <p>
-     * <b>Q: What happens after registration?</b><br>
-     * A: We don't just save to DB. We publish a {@code UserCreatedEvent} to Kafka.
-     * This allows other services (Notification, Account) to react asynchronously
-     * without tighter coupling (Decoupling).
-     * </p>
-     */
     public User register(User user) {
         // 1. Basic validation
         if (userRepository.findByUsername(user.getUsername()).isPresent()) {
@@ -74,11 +56,25 @@ public class AuthService implements UserDetailsService {
         user.setPasswordHash(passwordEncoder.encode(user.getPasswordHash()));
         User savedUser = userRepository.save(user);
 
+        // Audit Log: USER_REGISTERED
+        try {
+            auditLogRepository.save(AuditLog.builder()
+                    .serviceName("AUTH-SERVICE")
+                    .eventType("USER_REGISTERED")
+                    .userId(String.valueOf(savedUser.getUserId()))
+                    .affectedEntityType("USER")
+                    .affectedEntityId(String.valueOf(savedUser.getUserId()))
+                    .description("User registered successfully")
+                    .build());
+        } catch (Exception e) {
+            log.error("Failed to save audit log", e);
+        }
+
         // 3. Publish UserCreatedEvent
         UserCreatedEvent event = UserCreatedEvent.builder()
                 .userId(String.valueOf(user.getUserId()))
                 .username(user.getUsername())
-                .fullName(user.getUsername()) // or concatenate if you store first+last in future
+                .fullName(user.getUsername())
                 .email(user.getEmail())
                 .phone(user.getPhone())
                 .createdAt(user.getCreatedAt())
@@ -90,33 +86,21 @@ public class AuthService implements UserDetailsService {
     }
 
     // ----------------- LOGIN -----------------
-    /**
-     * Authenticates a user and issues tokens.
-     *
-     * <h2>Interview Topic: JWT (JSON Web Token)</h2>
-     * <p>
-     * <b>Q: What is the structure of a JWT?</b><br>
-     * A: Header (Algorithm), Payload (Claims: sub, role, exp), Signature (hashed
-     * with Secret Key).
-     * </p>
-     * <p>
-     * <b>Q: Explain Access Token vs Refresh Token?</b><br>
-     * A:
-     * <ul>
-     * <li><b>Access Token:</b> Short-lived (15 mins). Used to access resources.
-     * Stateless.</li>
-     * <li><b>Refresh Token:</b> Long-lived (7 days). Stored in DB. Used to get new
-     * Access Tokens. Stateful (allows Revocation).</li>
-     * </ul>
-     * This "Dual Token Strategy" balances security (short access window) with user
-     * experience (stay logged in).
-     * </p>
-     */
     public Session login(String username, String password, String ipAddress, String userAgent) {
+        // Attempt to find user
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                .orElse(null);
+
+        if (user == null) {
+            // Log FAILED (User not found)
+            saveAuditLog("LOGIN_FAILED", username, "USER", null, "User not found", 404, ipAddress);
+            throw new ResourceNotFoundException("User not found");
+        }
 
         if (!passwordEncoder.matches(password, user.getPasswordHash())) {
+            // Log FAILED (Bad credentials)
+            saveAuditLog("LOGIN_FAILED", String.valueOf(user.getUserId()), "USER", String.valueOf(user.getUserId()),
+                    "Invalid credentials", 401, ipAddress);
             throw new InvalidCredentialsException("Invalid credentials");
         }
 
@@ -141,7 +125,11 @@ public class AuthService implements UserDetailsService {
                 .isRevoked(false)
                 .build();
 
-        return sessionRepository.save(session);
+        Session savedSession = sessionRepository.save(session);
+        // Log SUCCESS
+        saveAuditLog("LOGIN_SUCCESS", String.valueOf(user.getUserId()), "SESSION",
+                String.valueOf(savedSession.getSessionId()), "Login successful", 200, ipAddress);
+        return savedSession;
     }
 
     // ----------------- LOGOUT -----------------
@@ -152,22 +140,11 @@ public class AuthService implements UserDetailsService {
                     s.setRevokedAt(LocalDateTime.now());
                     sessionRepository.save(s);
                 });
+        saveAuditLog("LOGOUT", String.valueOf(user.getUserId()), "USER", String.valueOf(user.getUserId()),
+                "User logged out", 200, null);
     }
 
     // ----------------- REFRESH -----------------
-    /**
-     * Refreshes the Access Token.
-     *
-     * <h2>Interview Topic: Token Rotation</h2>
-     * <p>
-     * <b>Q: Why do we rotate tokens?</b><br>
-     * A: If a Refresh Token is stolen, the attacker can use it indefinitely.
-     * By rotating (issuing a NEW Access Token + potentially a NEW Refresh Token)
-     * and tracking usage, we can detect theft.
-     * (Currently, this implementation only issues new Access Tokens, which is a
-     * Sliding Session strategy).
-     * </p>
-     */
     public TokenResponse refresh(String refreshToken) {
         Session session = sessionRepository.findByRefreshToken(refreshToken)
                 .orElseThrow(() -> new ResourceNotFoundException("Invalid refresh token"));
@@ -205,6 +182,24 @@ public class AuthService implements UserDetailsService {
 
     public List<User> getAllUsers() {
         return userRepository.findAll();
+    }
+
+    private void saveAuditLog(String eventType, String userId, String entityType, String entityId, String description,
+            int statusCode, String ipAddress) {
+        try {
+            auditLogRepository.save(AuditLog.builder()
+                    .serviceName("AUTH-SERVICE")
+                    .eventType(eventType)
+                    .userId(userId)
+                    .affectedEntityType(entityType)
+                    .affectedEntityId(entityId)
+                    .description(description)
+                    .statusCode(statusCode)
+                    .ipAddress(ipAddress)
+                    .build());
+        } catch (Exception e) {
+            log.error("Failed to save audit log: {}", e.getMessage());
+        }
     }
 
     // ----------------- SPRING SECURITY -----------------

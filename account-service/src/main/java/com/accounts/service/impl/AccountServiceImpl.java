@@ -3,14 +3,14 @@ package com.accounts.service.impl;
 import com.accounts.dto.AccountRequest;
 import com.accounts.entity.Account;
 import com.accounts.entity.AccountStatus;
+import com.accounts.entity.AuditLog;
 import com.accounts.exception.InsufficientBalanceException;
 import com.accounts.exception.ResourceNotFoundException;
 import com.accounts.repository.AccountRepository;
+import com.accounts.repository.AuditLogRepository;
 import com.accounts.service.AccountService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Isolation;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -25,25 +25,16 @@ import org.springframework.cache.annotation.Caching;
 @Service
 @Slf4j
 public class AccountServiceImpl implements AccountService {
-    // DIP: High-level code (controllers) depend on AccountService interface, not
-    // this concrete class directly
-    // LSP: Any other implementation of AccountService can substitute this one
-    // without breaking callers
-    // ISP: AccountService is a focused interface for account operations (not a
-    // "god" interface)
 
     private final AccountRepository accountRepository;
+    private final AuditLogRepository auditLogRepository; // Injected
 
     // Constant to avoid duplicated literal "Account not found"
     private static final String ACCOUNT_NOT_FOUND = "Account not found";
 
-    // DIP: Depends on AccountRepository abstraction (Spring Data interface), not
-    // low-level DB code
-
-    public AccountServiceImpl(AccountRepository accountRepository) {
-        // DIP: Constructor injection – framework provides dependency, service doesn't
-        // construct it
+    public AccountServiceImpl(AccountRepository accountRepository, AuditLogRepository auditLogRepository) {
         this.accountRepository = accountRepository;
+        this.auditLogRepository = auditLogRepository;
     }
 
     public Account createAccount(AccountRequest request) {
@@ -59,7 +50,12 @@ public class AccountServiceImpl implements AccountService {
                     .status(AccountStatus.ACTIVE)
                     .build();
 
-            Account savedAccount = accountRepository.save(account); // DIP: uses repository abstraction for persistence
+            Account savedAccount = accountRepository.save(account);
+
+            // Audit Log: ACCOUNT_CREATED
+            saveAuditLog("ACCOUNT_CREATED", savedAccount.getCustomerId(), "ACCOUNT",
+                    String.valueOf(savedAccount.getAccountId()), "Account created", 201);
+
             log.info("Account created successfully with accountId={}", savedAccount.getAccountId());
             return savedAccount;
         } catch (Exception e) {
@@ -183,6 +179,11 @@ public class AccountServiceImpl implements AccountService {
             account.setBalance(newBalance);
             accountRepository.save(account); // DIP: repository handles persistence details
 
+            // Audit Log (Optional for deposit, usually handled by transaction-service, but
+            // good for redundancy)
+            // saveAuditLog("DEPOSIT", account.getCustomerId(), "ACCOUNT",
+            // String.valueOf(accountId), "Deposit of " + amount, 200);
+
             log.info("Deposit successful. Old balance={}, New balance={}", oldBalance, newBalance);
 
         } catch (Exception e) {
@@ -241,7 +242,8 @@ public class AccountServiceImpl implements AccountService {
      * {@code Long firstLockId = fromAccountId < toAccountId ? fromAccountId : toAccountId;}
      * </p>
      */
-    //@Transactional(isolation = Isolation.DEFAULT, propagation = Propagation.REQUIRES_NEW)
+    // @Transactional(isolation = Isolation.DEFAULT, propagation =
+    // Propagation.REQUIRES_NEW)
     @Transactional
     // @Caching: Allows multiple cache operations to be applied to a single method.
     // Since a transfer affects two accounts (sender and receiver), we need to evict
@@ -304,4 +306,20 @@ public class AccountServiceImpl implements AccountService {
         }
     }
 
+    private void saveAuditLog(String eventType, String userId, String entityType, String entityId, String description,
+            int statusCode) {
+        try {
+            auditLogRepository.save(AuditLog.builder()
+                    .serviceName("ACCOUNT-SERVICE")
+                    .eventType(eventType)
+                    .userId(userId)
+                    .affectedEntityType(entityType)
+                    .affectedEntityId(entityId)
+                    .description(description)
+                    .statusCode(statusCode)
+                    .build());
+        } catch (Exception e) {
+            log.error("Failed to save audit log: {}", e.getMessage());
+        }
+    }
 }
