@@ -7,8 +7,7 @@ services:
       - ./pipeline/:/usr/share/logstash/pipeline/
       - ./drivers/:/usr/share/logstash/drivers/
       - /home/shrikar/Bank/elevens-bank:/logs
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+    network_mode: "host"
     environment:
       - LS_JAVA_OPTS=-Xms192m -Xmx192m
       - XPACK_MONITORING_ENABLED=false
