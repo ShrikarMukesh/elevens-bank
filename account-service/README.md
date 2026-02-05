@@ -53,3 +53,17 @@ graph TD
     D --> E[Store in Redis]
     E --> F[Return Data]
 ```
+
+## Error Handling & Reliability
+### Dead Letter Topic (DLT)
+This service consumes `customer.events` and uses a DLT strategy for fault tolerance.
+- **Retry Policy**: 3 attempts with 1-second backoff.
+- **DLT Topic**: `customer.events.DLT`
+
+```mermaid
+graph LR
+    A[Kafka Topic] -- Consume --> B(Account Consumer)
+    B -- Success --> C[Processed]
+    B -- Error --> D{Retry 3x}
+    D -- Fail --> E[Publish to .DLT]
+```

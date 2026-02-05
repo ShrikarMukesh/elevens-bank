@@ -28,7 +28,7 @@ public class KycController {
     public ResponseEntity<?> decryptKyc(@PathVariable String customerId,
                                         @RequestHeader("X-User-Id") String userId,
                                         @RequestHeader("X-Role") String role) {
-        // Enforce RBAC: Only COMPLIANCE_OFFICER or FRAUD_TEAM can decrypt
+        // Enforce RBAC (Role based access control): Only COMPLIANCE_OFFICER or FRAUD_TEAM can decrypt
         if (!"COMPLIANCE_OFFICER".equals(role) && !"FRAUD_TEAM".equals(role)) {
             return ResponseEntity.status(403).body("Access Denied: Insufficient Privileges");
         }

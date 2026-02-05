@@ -17,13 +17,9 @@ public class NotificationEventConsumer {
     private final ObjectMapper objectMapper;
 
     @KafkaListener(topics = "${spring.kafka.topic.name}", groupId = "${spring.kafka.consumer.group-id}")
-    public void consume(String message) {
-        try {
-            NotificationEvent event = objectMapper.readValue(message, NotificationEvent.class);
-            log.info("📥 Received Kafka Event: {}", event);
-            notificationService.processNotification(event);
-        } catch (Exception e) {
-            log.error("❌ Failed to process Kafka message: {}", message, e);
-        }
+    public void consume(String message) throws Exception {
+        NotificationEvent event = objectMapper.readValue(message, NotificationEvent.class);
+        log.info("📥 Received Kafka Event: {}", event);
+        notificationService.processNotification(event);
     }
 }

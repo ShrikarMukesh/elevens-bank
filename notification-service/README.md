@@ -34,3 +34,17 @@ sequenceDiagram
     
     Notif->>Mongo: Update Log (SENT)
 ```
+
+## Error Handling & Reliability
+### Dead Letter Topic (DLT)
+To ensure **zero data loss**, this service implements a DLT strategy for failed Kafka messages.
+- **Retry Policy**: 3 attempts with 1-second backoff.
+- **DLT Topic**: `bank.notification.event.v1.DLT`
+
+```mermaid
+graph LR
+    A[Kafka Topic] -- Consume --> B(Notification Consumer)
+    B -- Success --> C[Processed]
+    B -- Error --> D{Retry 3x}
+    D -- Fail --> E[Publish to .DLT]
+```

@@ -1,6 +1,8 @@
 package com.accounts.config;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -9,11 +11,16 @@ import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.listener.DeadLetterPublishingRecoverer;
+import org.springframework.kafka.listener.DefaultErrorHandler;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
+import org.springframework.util.backoff.FixedBackOff;
 
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 @EnableKafka
 @Configuration
 public class KafkaConsumerConfig {
@@ -41,9 +48,24 @@ public class KafkaConsumerConfig {
     }
 
     @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, Object> kafkaListenerContainerFactory() {
+    public ConcurrentKafkaListenerContainerFactory<String, Object> kafkaListenerContainerFactory(
+            KafkaTemplate<Object, Object> kafkaTemplate) {
         ConcurrentKafkaListenerContainerFactory<String, Object> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory());
+
+        // Define DeadLetterPublishingRecoverer
+        DeadLetterPublishingRecoverer recoverer = new DeadLetterPublishingRecoverer(kafkaTemplate,
+                (r, e) -> {
+                    log.error(
+                            "❌ Failed to process message. Sending to DLT. Topic: {}, Partition: {}, Offset: {}, Error: {}",
+                            r.topic(), r.partition(), r.offset(), e.getMessage());
+                    return new TopicPartition(r.topic() + ".DLT", r.partition());
+                });
+
+        // Define generic ErrorHandler with BackOff (3 attempts, 1 second interval)
+        DefaultErrorHandler errorHandler = new DefaultErrorHandler(recoverer, new FixedBackOff(1000L, 2L));
+        factory.setCommonErrorHandler(errorHandler);
+
         return factory;
     }
 }

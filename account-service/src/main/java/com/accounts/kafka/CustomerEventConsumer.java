@@ -25,16 +25,12 @@ public class CustomerEventConsumer {
     public void consume(CustomerEvent event) {
         log.info("Received Kafka Event: {}", event);
 
-        try {
-            if ("CUSTOMER_VERIFIED".equals(event.getEventType())) {
-                handleCustomerVerified(event);
-            } else if ("CUSTOMER_CREATED".equals(event.getEventType())) {
-                log.info("Customer created event received (no account yet): {}", event.getCustomerId());
-            } else {
-                log.warn("Unhandled event type: {}", event.getEventType());
-            }
-        } catch (Exception ex) {
-            log.error("Error processing event: {}", event, ex);
+        if ("CUSTOMER_VERIFIED".equals(event.getEventType())) {
+            handleCustomerVerified(event);
+        } else if ("CUSTOMER_CREATED".equals(event.getEventType())) {
+            log.info("Customer created event received (no account yet): {}", event.getCustomerId());
+        } else {
+            log.warn("Unhandled event type: {}", event.getEventType());
         }
     }
 
