@@ -6,9 +6,11 @@ import com.transaction.dto.AccountResponse;
 import com.transaction.dto.AccountTransactionRequest;
 import com.transaction.dto.CustomerResponse;
 import com.transaction.dto.TransactionRequest;
+import com.transaction.entity.AuditLog;
 import com.transaction.entity.Transaction;
 import com.transaction.entity.TransactionStatus;
 import com.transaction.exception.DownstreamServiceException;
+import com.transaction.repository.AuditLogRepository;
 import com.transaction.repository.TransactionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +36,7 @@ import java.util.UUID;
 public class TransactionService {
 
     private final TransactionRepository transactionRepository;
+    private final AuditLogRepository auditLogRepository;
     private final AccountClient accountClient;
     private final CustomerClient customerClient;
     private final KafkaTemplate<String, Object> kafkaTemplate;
@@ -91,6 +94,11 @@ public class TransactionService {
             txn.setStatus(TransactionStatus.SUCCESS);
             log.info("Transaction SUCCESS: {}", txn.getReferenceNumber());
 
+            // Audit Log: TRANSACTION_SUCCESS
+            saveAuditLog("TRANSACTION_SUCCESS", String.valueOf(request.accountId()), "TRANSACTION",
+                    txn.getReferenceNumber(), "Transaction completed successfully: " + request.transactionType(),
+                    200, null);
+
             // Step 4: Publish event to Kafka for Notification Service
             publishTransactionEvent(txn);
 
@@ -98,11 +106,17 @@ public class TransactionService {
             txn.setStatus(TransactionStatus.FAILED);
             txn.setDescription("Downstream %s failed: %s".formatted(ex.getService(), ex.getMessage()));
             transactionRepository.save(txn);
+            // Audit Log: TRANSACTION_FAILED
+            saveAuditLog("TRANSACTION_FAILED", String.valueOf(request.accountId()), "TRANSACTION",
+                    txn.getReferenceNumber(), "Downstream service failure", 502, ex.getMessage());
             throw ex; // let @ControllerAdvice map to proper HTTP (502/403/etc.)
         } catch (Exception e) {
             txn.setStatus(TransactionStatus.FAILED);
             txn.setDescription("Unexpected error: " + e.getMessage());
             transactionRepository.save(txn);
+            // Audit Log: TRANSACTION_FAILED
+            saveAuditLog("TRANSACTION_FAILED", String.valueOf(request.accountId()), "TRANSACTION",
+                    txn.getReferenceNumber(), "Unexpected error during transaction", 500, e.getMessage());
             throw e;
         }
         return transactionRepository.save(txn);
@@ -189,7 +203,7 @@ public class TransactionService {
             // Fetch account details to get customerId
             AccountResponse account = accountClient.getAccount(txn.getAccountId());
             String customerId = account.customerId();
-            
+
             // Fetch customer details to get name and email
             CustomerResponse customer = customerClient.getCustomer(customerId);
             String customerName = customer.firstName() + " " + customer.lastName();
@@ -239,6 +253,29 @@ public class TransactionService {
             log.info("Published transaction event to Kafka: {}", eventType);
         } catch (Exception e) {
             log.error("Failed to publish transaction event", e);
+        }
+    }
+
+    /**
+     * Saves an audit log entry for transaction events.
+     * Wrapped in try-catch to prevent audit failures from affecting business logic.
+     */
+    private void saveAuditLog(String eventType, String userId, String entityType, String entityId,
+            String description, Integer statusCode, String errorMessage) {
+        try {
+            auditLogRepository.save(AuditLog.builder()
+                    .serviceName("TRANSACTION-SERVICE")
+                    .eventType(eventType)
+                    .userId(userId)
+                    .affectedEntityType(entityType)
+                    .affectedEntityId(entityId)
+                    .description(description)
+                    .statusCode(statusCode)
+                    .errorMessage(errorMessage)
+                    .build());
+            log.debug("Audit log saved: {} for entity {}", eventType, entityId);
+        } catch (Exception e) {
+            log.error("Failed to save audit log for event {}: {}", eventType, e.getMessage());
         }
     }
 

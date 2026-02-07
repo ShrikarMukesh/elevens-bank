@@ -1,10 +1,12 @@
 package com.cards.service.impl;
 
+import com.cards.entity.AuditLog;
 import com.cards.model.Card;
 import com.cards.model.CardRequest;
 import com.cards.model.CardStatus;
 import com.cards.model.CardType;
 import com.cards.model.Network;
+import com.cards.repository.AuditLogRepository;
 import com.cards.repository.CardRepository;
 import com.cards.service.CardService;
 import com.cards.exception.ResourceNotFoundException;
@@ -26,6 +28,7 @@ import java.util.stream.Collectors;
 public class CardServiceImpl implements CardService {
 
     private final CardRepository cardRepository;
+    private final AuditLogRepository auditLogRepository;
     private final PasswordEncoder passwordEncoder;
 
     // Single Random instance reused across method calls
@@ -34,8 +37,10 @@ public class CardServiceImpl implements CardService {
     // Constant for duplicated "Card not found" literal
     private static final String CARD_NOT_FOUND = "Card not found";
 
-    public CardServiceImpl(CardRepository cardRepository, PasswordEncoder passwordEncoder) {
+    public CardServiceImpl(CardRepository cardRepository, AuditLogRepository auditLogRepository,
+            PasswordEncoder passwordEncoder) {
         this.cardRepository = cardRepository;
+        this.auditLogRepository = auditLogRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -66,6 +71,11 @@ public class CardServiceImpl implements CardService {
         card.setCreatedAt(LocalDate.from(LocalDateTime.now()));
 
         com.cards.entity.Card savedCard = cardRepository.save(card);
+
+        // Audit Log: CARD_CREATED
+        saveAuditLog("CARD_CREATED", request.getCustomerId(), "CARD", String.valueOf(savedCard.getCardId()),
+                "New " + request.getCardType() + " card created", 201, null);
+
         log.info("Successfully created card with id: {}", savedCard.getCardId());
         return mapToModel(savedCard);
     }
@@ -118,7 +128,6 @@ public class CardServiceImpl implements CardService {
         return mapToModel(entity);
     }
 
-
     @Override
     public List<Card> getCardsByCustomerId(String customerId) {
         log.info("Fetching cards for customerId: {}", customerId);
@@ -150,6 +159,11 @@ public class CardServiceImpl implements CardService {
                 .orElseThrow(() -> new ResourceNotFoundException(CARD_NOT_FOUND));
         card.setStatus(com.cards.entity.CardStatus.BLOCKED);
         cardRepository.save(card);
+
+        // Audit Log: CARD_BLOCKED
+        saveAuditLog("CARD_BLOCKED", card.getCustomerId(), "CARD", String.valueOf(id),
+                "Card blocked", 200, null);
+
         log.info("Successfully blocked card with id: {}", id);
     }
 
@@ -177,6 +191,11 @@ public class CardServiceImpl implements CardService {
         card.setPinHash(passwordEncoder.encode(pin));
         card.setStatus(com.cards.entity.CardStatus.ACTIVE);
         cardRepository.save(card);
+
+        // Audit Log: CARD_ACTIVATED
+        saveAuditLog("CARD_ACTIVATED", card.getCustomerId(), "CARD", String.valueOf(id),
+                "Card activated successfully", 200, null);
+
         log.info("Successfully activated card with id: {}", id);
     }
 
@@ -198,6 +217,11 @@ public class CardServiceImpl implements CardService {
 
         card.setPinHash(passwordEncoder.encode(newPin));
         cardRepository.save(card);
+
+        // Audit Log: PIN_RESET
+        saveAuditLog("PIN_RESET", card.getCustomerId(), "CARD", String.valueOf(id),
+                "Card PIN reset successfully", 200, null);
+
         log.info("Successfully reset PIN for card with id: {}", id);
     }
 
@@ -246,5 +270,28 @@ public class CardServiceImpl implements CardService {
         model.setStatus(CardStatus.valueOf(entity.getStatus().name()));
         model.setCreatedAt(entity.getCreatedAt());
         return model;
+    }
+
+    /**
+     * Saves an audit log entry for card events.
+     * Wrapped in try-catch to prevent audit failures from affecting business logic.
+     */
+    private void saveAuditLog(String eventType, String userId, String entityType, String entityId,
+            String description, Integer statusCode, String errorMessage) {
+        try {
+            auditLogRepository.save(AuditLog.builder()
+                    .serviceName("CARDS-SERVICE")
+                    .eventType(eventType)
+                    .userId(userId)
+                    .affectedEntityType(entityType)
+                    .affectedEntityId(entityId)
+                    .description(description)
+                    .statusCode(statusCode)
+                    .errorMessage(errorMessage)
+                    .build());
+            log.debug("Audit log saved: {} for entity {}", eventType, entityId);
+        } catch (Exception e) {
+            log.error("Failed to save audit log for event {}: {}", eventType, e.getMessage());
+        }
     }
 }
