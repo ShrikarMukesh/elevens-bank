@@ -1,9 +1,46 @@
+# =============================================
+# MySQL Secret
+# =============================================
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mysql-secret
+  labels:
+    app: mysql
+type: Opaque
+stringData:
+  MYSQL_ROOT_PASSWORD: "root"
+  MYSQL_DATABASE: "elevens-bank"
+---
+# =============================================
+# Persistent Volume Claim — data survives restarts
+# =============================================
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-pvc
+  labels:
+    app: mysql
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+---
+# =============================================
+# MySQL Deployment
+# =============================================
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: mysql
+  labels:
+    app: mysql
 spec:
   replicas: 1
+  strategy:
+    type: Recreate # MySQL must not run 2 instances on same volume
   selector:
     matchLabels:
       app: mysql
@@ -15,22 +52,73 @@ spec:
       containers:
         - name: mysql
           image: mysql:8.0
-          env:
-            - name: MYSQL_ROOT_PASSWORD
-              value: "root"
-            - name: MYSQL_DATABASE
-              value: "elevens-bank"
           ports:
-            - containerPort: 3306
+            - name: mysql
+              containerPort: 3306
+              protocol: TCP
+          envFrom:
+            - secretRef:
+                name: mysql-secret
+          # --- Persistent Data ---
+          volumeMounts:
+            - name: mysql-data
+              mountPath: /var/lib/mysql
+          # --- Health Probes (use 127.0.0.1 to force TCP, not socket) ---
+          livenessProbe:
+            exec:
+              command:
+                - mysqladmin
+                - ping
+                - -h
+                - "127.0.0.1"
+                - -uroot
+                - -proot
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 5
+          readinessProbe:
+            exec:
+              command:
+                - mysql
+                - -h
+                - "127.0.0.1"
+                - -uroot
+                - -proot
+                - -e
+                - "SELECT 1"
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          # --- Resource Limits ---
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: 500m
+              memory: 1Gi
+      volumes:
+        - name: mysql-data
+          persistentVolumeClaim:
+            claimName: mysql-pvc
 ---
+# =============================================
+# MySQL Service
+# =============================================
 apiVersion: v1
 kind: Service
 metadata:
   name: mysql
+  labels:
+    app: mysql
 spec:
+  type: ClusterIP
   selector:
     app: mysql
   ports:
-    - protocol: TCP
+    - name: mysql
+      protocol: TCP
       port: 3306
       targetPort: 3306

@@ -1,0 +1,17 @@
+apiVersion: v2
+name: cards-service
+description: Elevens Bank Cards Service Helm Chart
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+maintainers:
+  - name: Shrikar Mukesh
+    url: https://github.com/ShrikarMukesh
+keywords:
+  - spring-boot
+  - microservice
+  - banking
+  - cards
+home: https://github.com/ShrikarMukesh/elevens-bank
+sources:
+  - https://github.com/ShrikarMukesh/elevens-bank

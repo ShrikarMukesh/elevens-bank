@@ -1,0 +1,81 @@
+# =============================================
+# Cards Service — Helm Values
+# =============================================
+
+replicaCount: 2
+
+image:
+  repository: ctshrikar/cards-service
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 2001
+  managementPort: 8079
+
+# ---- Spring Profiles ----
+spring:
+  profiles: k8s
+
+# ---- Database ----
+database:
+  url: "jdbc:mysql://mysql:3306/elevens-bank"
+  username: "root"
+  password: "root"
+
+# ---- JWT ----
+jwt:
+  secret: "change_this_to_same_secret_used_in_auth_service_32_bytes_minimum"
+
+# ---- Resource Limits ----
+resources:
+  requests:
+    cpu: 200m
+    memory: 384Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+# ---- Health Probes ----
+probes:
+  liveness:
+    path: /actuator/health/liveness
+    initialDelaySeconds: 60
+    periodSeconds: 15
+    timeoutSeconds: 5
+    failureThreshold: 3
+  readiness:
+    path: /actuator/health/readiness
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+  startup:
+    path: /actuator/health
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    failureThreshold: 30
+
+# ---- Security Context ----
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+
+# ---- Deployment Strategy ----
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxSurge: 1
+    maxUnavailable: 0
+
+terminationGracePeriodSeconds: 30
+
+# ---- Node Selector / Tolerations ----
+nodeSelector: {}
+tolerations: []
+affinity: {}

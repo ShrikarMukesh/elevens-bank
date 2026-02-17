@@ -30,5 +30,7 @@ kind load docker-image discovery-service:latest --name dev-cluster
 # Apply manifests
 echo "Applying Kubernetes manifests..."
 kubectl apply -f k8s/
+# Apply service-local manifests
+kubectl apply -f cards-service/k8s/
 
 echo "Deployment complete!"

@@ -1,0 +1,39 @@
+# Build artifacts
+**/target/
+**/*.jar
+
+# IDE files
+**/.idea/
+**/.vscode/
+**/.settings/
+**/*.iml
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Docker
+**/.dockerignore
+**/Dockerfile
+
+# Helm & K8s (not needed for build)
+**/helm/
+**/k8s/
+
+# Logs
+**/logs/
+**/*.log
+
+# ELK & Kafka configs
+elk/
+kafka/
+
+# Assets & Notes
+assets/
+notes/
+database/
+
+# OS files
+**/.DS_Store
+**/Thumbs.db

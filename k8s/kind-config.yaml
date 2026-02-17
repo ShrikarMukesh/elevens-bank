@@ -2,10 +2,26 @@ kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 name: dev-cluster
 nodes:
-- role: control-plane
-  extraPortMappings:
-  - containerPort: 30001
-    hostPort: 30001
-    protocol: TCP
-- role: worker
-- role: worker
+  - role: control-plane
+    extraPortMappings:
+      # API Gateway
+      - containerPort: 30001
+        hostPort: 30001
+        protocol: TCP
+      # Additional services you may want to expose
+      - containerPort: 30002
+        hostPort: 30002
+        protocol: TCP
+    kubeadmConfigPatches:
+      - |
+        kind: InitConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            # Better resource visibility
+            system-reserved: memory=512Mi
+  - role: worker
+    labels:
+      workload: services
+  - role: worker
+    labels:
+      workload: services
